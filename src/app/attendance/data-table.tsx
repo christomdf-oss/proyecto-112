@@ -123,11 +123,11 @@ export function DataTable<TData, TValue>({
               {date?.from ? (
                 date.to ? (
                   <>
-                    {format(date.from, 'LLL dd, y')} -{' '}
-                    {format(date.to, 'LLL dd, y')}
+                    {format(date.from, 'LLL dd, y', { locale: es })} -{' '}
+                    {format(date.to, 'LLL dd, y', { locale: es })}
                   </>
                 ) : (
-                  format(date.from, 'LLL dd, y')
+                  format(date.from, 'LLL dd, y', { locale: es })
                 )
               ) : (
                 <span>Elige un rango de fechas</span>

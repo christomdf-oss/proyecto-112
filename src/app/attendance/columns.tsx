@@ -26,6 +26,22 @@ export const columns: ColumnDef<Attendance>[] = [
         </div>
       );
     },
+    filterFn: (row, columnId, filterValue) => {
+      const date = row.getValue(columnId) as Date;
+      const [start, end] = filterValue as [Date | undefined, Date | undefined];
+
+      if (!start || !end) {
+        return true;
+      }
+
+      const startDate = new Date(start);
+      startDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(end);
+      endDate.setHours(23, 59, 59, 999);
+
+      return date >= startDate && date <= endDate;
+    },
   },
   {
     accessorKey: 'type',
