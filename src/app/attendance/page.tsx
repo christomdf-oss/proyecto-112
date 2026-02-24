@@ -14,8 +14,8 @@ export default function AttendancePage() {
   return (
     <div className="container mx-auto py-2">
       <PageHeader
-        title="Attendance History"
-        description="Browse, search, and filter historical attendance records."
+        title="Historial de Asistencia"
+        description="Navega, busca y filtra los registros históricos de asistencia."
       />
       <Card>
         <CardContent className="pt-6">

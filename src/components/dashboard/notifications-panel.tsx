@@ -3,6 +3,7 @@
 import { CheckCircle2, XCircle, LogIn, LogOut } from 'lucide-react';
 import type { NotificationLog } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import {
   Tooltip,
   TooltipContent,
@@ -28,7 +29,7 @@ const NotificationsPanel = ({ logs }: NotificationsPanelProps) => {
                   <XCircle className="h-5 w-5 text-destructive" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Reason: {log.reason || 'Unknown Error'}</p>
+                  <p>Razón: {log.reason || 'Error Desconocido'}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -43,7 +44,7 @@ const NotificationsPanel = ({ logs }: NotificationsPanelProps) => {
               )}
             </p>
             <p className="text-sm text-muted-foreground">
-              {formatDistanceToNow(log.timestamp, { addSuffix: true })}
+              {formatDistanceToNow(log.timestamp, { addSuffix: true, locale: es })}
             </p>
           </div>
           <div className="ml-auto text-sm text-muted-foreground capitalize">

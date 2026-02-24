@@ -20,35 +20,35 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Students"
+          title="Total de Alumnos"
           value={students.length}
           icon={Users}
-          description="Total registered students"
+          description="Alumnos registrados en total"
         />
         <StatCard
-          title="Present Today"
+          title="Presentes Hoy"
           value={presentToday}
           icon={LogIn}
-          description="Students who have entered today"
+          description="Alumnos que han entrado hoy"
         />
         <StatCard
-          title="Today's Events"
+          title="Eventos de Hoy"
           value={attendance.filter(a => a.timestamp.toDateString() === new Date().toDateString()).length}
           icon={History}
-          description="Total entry/exit events today"
+          description="Eventos de entrada/salida de hoy"
         />
         <StatCard
-          title="Notifications Sent"
+          title="Notificaciones Enviadas"
           value={notificationLogs.length}
           icon={Bell}
-          description="Notifications sent in the last 24h"
+          description="Notificaciones enviadas en las últimas 24h"
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Live Attendance Stream</CardTitle>
+            <CardTitle>Registro de Asistencia en Vivo</CardTitle>
           </CardHeader>
           <CardContent>
             <AttendanceFeed attendance={attendance.slice(0, 10)} />
@@ -56,7 +56,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>WhatsApp Notification Logs</CardTitle>
+            <CardTitle>Registros de Notificaciones de WhatsApp</CardTitle>
           </CardHeader>
           <CardContent>
             <NotificationsPanel logs={notificationLogs.slice(0, 7)} />

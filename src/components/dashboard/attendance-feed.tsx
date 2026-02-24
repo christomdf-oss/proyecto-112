@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { Attendance } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface AttendanceFeedProps {
   attendance: Attendance[];
@@ -25,12 +26,12 @@ const AttendanceFeed = ({ attendance }: AttendanceFeedProps) => {
           <div className="grid gap-1">
             <p className="text-sm font-medium leading-none">{item.studentName}</p>
             <p className="text-sm text-muted-foreground">
-              {formatDistanceToNow(item.timestamp, { addSuffix: true })}
+              {formatDistanceToNow(item.timestamp, { addSuffix: true, locale: es })}
             </p>
           </div>
           <div className="ml-auto font-medium">
-            <Badge variant={item.type === 'entrada' ? 'success' : 'destructive'}>
-              {item.type === 'entrada' ? 'Entry' : 'Exit'}
+            <Badge variant={item.type === 'entrada' ? 'success' : 'destructive'} className="capitalize">
+              {item.type}
             </Badge>
           </div>
         </div>

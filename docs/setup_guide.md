@@ -1,12 +1,12 @@
-# CampusCheck Setup Guide
+# Guía de Configuración de CampusCheck
 
-This guide provides information on setting up the necessary backend components for the CampusCheck application to function correctly.
+Esta guía proporciona información sobre cómo configurar los componentes de backend necesarios para que la aplicación CampusCheck funcione correctamente.
 
-## 1. Firestore Security Rules
+## 1. Reglas de Seguridad de Firestore
 
-To secure your Firestore database, ensuring that only your Raspberry Pi can read and write data, you should use the following rules. These rules are a starting point and should be adapted to your specific authentication setup.
+Para proteger tu base de datos de Firestore, asegurando que solo tu Raspberry Pi pueda leer y escribir datos, debes usar las siguientes reglas. Estas reglas son un punto de partida y deben adaptarse a tu configuración de autenticación específica.
 
-Go to your Firebase project -> Firestore Database -> Rules tab, and paste the following:
+Ve a tu proyecto de Firebase -> Firestore Database -> Pestaña de Reglas, y pega lo siguiente:
 
 ```
 rules_version = '2';
@@ -14,64 +14,64 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // The Python `firebase-admin` SDK uses a service account which has admin
-    // privileges and bypasses security rules by default. These rules are
-    // primarily for restricting access from client-side applications (like this web app).
-    // For the web app to function, you would need to implement user authentication
-    // and adjust the rules accordingly to allow authenticated users to read data.
+    // El SDK de Python `firebase-admin` utiliza una cuenta de servicio que tiene
+    // privilegios de administrador y omite las reglas de seguridad por defecto. Estas reglas son
+    // principalmente para restringir el acceso desde aplicaciones del lado del cliente (como esta aplicación web).
+    // Para que la aplicación web funcione, necesitarías implementar la autenticación de usuarios
+    // y ajustar las reglas en consecuencia para permitir que los usuarios autenticados lean datos.
 
-    // Allow public read access for demonstration purposes.
-    // In a production environment, you should restrict this to authenticated users.
-    // e.g. `allow read: if request.auth != null;`
+    // Permitir acceso de lectura público para fines de demostración.
+    // En un entorno de producción, deberías restringir esto a usuarios autenticados.
+    // ej. `allow read: if request.auth != null;`
     
     match /alumnos/{alumnoId} {
       allow read: if true;
-      // Write access should be locked down to your backend service.
+      // El acceso de escritura debe estar restringido a tu servicio de backend.
       allow write: if false; 
     }
     
     match /asistencias/{asistenciaId} {
       allow read: if true;
-      // Write access should be locked down to your backend service.
+      // El acceso de escritura debe estar restringido a tu servicio de backend.
       allow write: if false;
     }
   }
 }
 ```
 
-**Important:** The Python `firebase-admin` SDK uses a service account, which by default has **admin privileges** and **bypasses all security rules**. The rules above are therefore most important for preventing unauthorized access from **client-side applications** (like a web browser or mobile app).
+**Importante:** El SDK de Python `firebase-admin` utiliza una cuenta de servicio, que por defecto tiene **privilegios de administrador** y **omite todas las reglas de seguridad**. Por lo tanto, las reglas anteriores son más importantes para prevenir el acceso no autorizado desde **aplicaciones del lado del cliente** (como un navegador web o una aplicación móvil).
 
-## 2. Firebase Credentials for Python Script
+## 2. Credenciales de Firebase para el Script de Python
 
-For your Python script on the Raspberry Pi to authenticate with Firebase using `firebase-admin`, you need a **service account key file** (`.json`).
+Para que tu script de Python en la Raspberry Pi se autentique con Firebase usando `firebase-admin`, necesitas un **archivo de clave de cuenta de servicio** (`.json`).
 
-Here’s how to get it:
+Aquí te explicamos cómo obtenerlo:
 
-1.  **Go to your Firebase Project Console.**
-2.  Click the **gear icon** next to "Project Overview" in the top-left sidebar.
-3.  Select **Project settings**.
-4.  Go to the **Service accounts** tab.
-5.  Click the **"Generate new private key"** button.
-6.  A warning will appear. Click **"Generate key"** to confirm.
-7.  A `.json` file will be automatically downloaded to your computer.
+1.  **Ve a la Consola de tu Proyecto de Firebase.**
+2.  Haz clic en el **icono de engranaje** junto a "Descripción general del proyecto" en la barra lateral superior izquierda.
+3.  Selecciona **Configuración del proyecto**.
+4.  Ve a la pestaña **Cuentas de servicio**.
+5.  Haz clic en el botón **"Generar nueva clave privada"**.
+6.  Aparecerá una advertencia. Haz clic en **"Generar clave"** para confirmar.
+7.  Un archivo `.json` se descargará automáticamente en tu computadora.
 
-**How to use it:**
+**Cómo usarlo:**
 
-*   **Rename this file** to something simple, like `serviceAccountKey.json`.
-*   **Securely copy this file** to your Raspberry Pi. Do NOT commit this file to a public Git repository, as it grants full administrative access to your Firebase project.
-*   In your Python script, you will reference the path to this file to initialize the Firebase Admin SDK:
+*   **Renombra este archivo** a algo simple, como `serviceAccountKey.json`.
+*   **Copia de forma segura este archivo** a tu Raspberry Pi. NO confirmes este archivo en un repositorio Git público, ya que otorga acceso administrativo completo a tu proyecto de Firebase.
+*   En tu script de Python, harás referencia a la ruta de este archivo para inicializar el SDK de Firebase Admin:
 
     ```python
     import firebase_admin
     from firebase_admin import credentials
 
-    # Replace "path/to/your/serviceAccountKey.json" with the actual path
-    cred = credentials.Certificate("path/to/your/serviceAccountKey.json")
+    # Reemplaza "ruta/a/tu/serviceAccountKey.json" con la ruta real
+    cred = credentials.Certificate("ruta/a/tu/serviceAccountKey.json")
     
-    # Replace "<YOUR-PROJECT-ID>" with your actual Firebase project ID
+    # Reemplaza "<TU-ID-DE-PROYECTO>" con tu ID de proyecto de Firebase real
     firebase_admin.initialize_app(cred, {
-        'projectId': '<YOUR-PROJECT-ID>',
+        'projectId': '<TU-ID-DE-PROYECTO>',
     })
     ```
 
-This setup allows your Python script to securely connect to and manage your Firebase resources.
+Esta configuración permite que tu script de Python se conecte de forma segura y administre tus recursos de Firebase.

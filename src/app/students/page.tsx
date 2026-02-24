@@ -15,12 +15,12 @@ export default function StudentsPage() {
   return (
     <div className="container mx-auto py-2">
       <PageHeader 
-        title="Student Management"
-        description="View, add, and manage student profiles."
+        title="Gestión de Alumnos"
+        description="Ver, agregar y gestionar perfiles de alumnos."
       >
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Register Student
+          Registrar Alumno
         </Button>
       </PageHeader>
       <Card>

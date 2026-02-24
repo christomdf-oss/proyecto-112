@@ -37,6 +37,7 @@ import {
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { Student } from '@/lib/types';
 import type { DateRange } from 'react-day-picker';
@@ -85,7 +86,7 @@ export function DataTable<TData, TValue>({
     <div>
       <div className="flex flex-wrap items-center gap-4 py-4">
         <Input
-          placeholder="Filter by student..."
+          placeholder="Filtrar por alumno..."
           value={
             (table.getColumn('studentName')?.getFilterValue() as string) ?? ''
           }
@@ -100,12 +101,12 @@ export function DataTable<TData, TValue>({
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by type" />
+            <SelectValue placeholder="Filtrar por tipo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="entrada">Entry</SelectItem>
-            <SelectItem value="salida">Exit</SelectItem>
+            <SelectItem value="all">Todos los tipos</SelectItem>
+            <SelectItem value="entrada">Entrada</SelectItem>
+            <SelectItem value="salida">Salida</SelectItem>
           </SelectContent>
         </Select>
         <Popover>
@@ -129,7 +130,7 @@ export function DataTable<TData, TValue>({
                   format(date.from, 'LLL dd, y')
                 )
               ) : (
-                <span>Pick a date range</span>
+                <span>Elige un rango de fechas</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -141,6 +142,7 @@ export function DataTable<TData, TValue>({
               selected={date}
               onSelect={setDate}
               numberOfMonths={2}
+              locale={es}
             />
           </PopoverContent>
         </Popover>
@@ -188,7 +190,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No hay resultados.
                 </TableCell>
               </TableRow>
             )}
@@ -202,7 +204,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Previous
+          Anterior
         </Button>
         <Button
           variant="outline"
@@ -210,7 +212,7 @@ export function DataTable<TData, TValue>({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          Siguiente
         </Button>
       </div>
     </div>

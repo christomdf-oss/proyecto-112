@@ -17,18 +17,18 @@ import { Badge } from '@/components/ui/badge';
 export const columns: ColumnDef<Student>[] = [
   {
     accessorKey: 'nombre',
-    header: 'Name',
+    header: 'Nombre',
   },
   {
     accessorKey: 'id_huella',
-    header: 'Fingerprint ID',
+    header: 'ID de Huella',
     cell: ({ row }) => {
         return <Badge variant="outline">#{row.original.id_huella}</Badge>;
     }
   },
   {
     accessorKey: 'telefono_tutor',
-    header: "Guardian's Phone",
+    header: "Teléfono del Tutor",
   },
   {
     id: 'actions',
@@ -40,20 +40,20 @@ export const columns: ColumnDef<Student>[] = [
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">Abrir menú</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => navigator.clipboard.writeText(student.id)}
               >
-                Copy student ID
+                Copiar ID de alumno
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Edit Profile</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">Delete Profile</DropdownMenuItem>
+              <DropdownMenuItem>Editar Perfil</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">Eliminar Perfil</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

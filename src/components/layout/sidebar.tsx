@@ -19,9 +19,9 @@ const AppSidebar = () => {
   const pathname = usePathname();
 
   const menuItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/students', label: 'Students', icon: Users },
-    { href: '/attendance', label: 'Attendance', icon: History },
+    { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
+    { href: '/students', label: 'Alumnos', icon: Users },
+    { href: '/attendance', label: 'Asistencia', icon: History },
   ];
 
   return (
@@ -72,9 +72,9 @@ const AppSidebar = () => {
       <SidebarFooter className='h-16'>
         <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: 'Settings', side: 'right' }}>
+                <SidebarMenuButton tooltip={{ children: 'Configuración', side: 'right' }}>
                     <Settings />
-                    <span>Settings</span>
+                    <span>Configuración</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
