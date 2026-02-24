@@ -32,7 +32,7 @@ const AppSidebar = () => {
     >
       <SidebarHeader className="h-16 flex items-center justify-center">
         <Link href="/" className="flex items-center gap-3">
-          <Logo className="h-8 w-8 shrink-0" />
+          <Logo className="shrink-0" />
           <div className="flex flex-col">
             <span className="font-bold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">
               COBACAM
