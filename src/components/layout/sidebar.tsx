@@ -9,10 +9,11 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Users, History, Settings, Building } from 'lucide-react';
+import { LayoutDashboard, Users, History, Settings } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Separator } from '../ui/separator';
+import Logo from '@/components/logo';
 
 const AppSidebar = () => {
   const pathname = usePathname();
@@ -31,7 +32,7 @@ const AppSidebar = () => {
     >
       <SidebarHeader className="h-16 flex items-center justify-center">
         <Link href="/" className="flex items-center gap-3">
-          <Building className="h-8 w-8 text-primary shrink-0" />
+          <Logo className="h-8 w-8 shrink-0" />
           <div className="flex flex-col">
             <span className="font-bold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">
               COBACAM
