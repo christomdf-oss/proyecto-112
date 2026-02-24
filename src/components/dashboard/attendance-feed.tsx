@@ -29,7 +29,7 @@ const AttendanceFeed = ({ attendance }: AttendanceFeedProps) => {
             </p>
           </div>
           <div className="ml-auto font-medium">
-            <Badge variant={item.type === 'entrada' ? 'default' : 'secondary'} className={item.type === 'entrada' ? 'bg-green-500' : ''}>
+            <Badge variant={item.type === 'entrada' ? 'success' : 'destructive'}>
               {item.type === 'entrada' ? 'Entry' : 'Exit'}
             </Badge>
           </div>

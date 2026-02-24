@@ -33,8 +33,7 @@ export const columns: ColumnDef<Attendance>[] = [
       const type = row.original.type;
       return (
         <Badge
-          variant={type === 'entrada' ? 'default' : 'secondary'}
-          className={type === 'entrada' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600 text-primary-foreground'}
+          variant={type === 'entrada' ? 'success' : 'destructive'}
         >
           {type === 'entrada' ? 'Entry' : 'Exit'}
         </Badge>

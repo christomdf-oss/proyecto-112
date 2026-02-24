@@ -28,14 +28,12 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased', 'min-h-screen bg-background font-sans')}>
         <SidebarProvider>
-          <div className="relative flex min-h-screen flex-col">
-            <AppSidebar />
-            <div className="flex flex-col md:pl-12 group-data-[sidebar-state=expanded]:md:pl-64 transition-[margin-left] ease-in-out duration-300">
-              <Header />
-              <main className="flex-1 p-4 md:p-8 pt-6">
-                {children}
-              </main>
-            </div>
+          <AppSidebar />
+          <div className="flex-1 flex flex-col">
+            <Header />
+            <main className="flex-1 p-4 md:p-8 pt-6">
+              {children}
+            </main>
           </div>
           <Toaster />
         </SidebarProvider>
