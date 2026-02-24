@@ -7,8 +7,8 @@ import AppSidebar from '@/components/layout/sidebar';
 import Header from '@/components/layout/header';
 
 export const metadata: Metadata = {
-  title: 'CampusCheck',
-  description: 'Sistema de Gestión de Asistencia Estudiantil',
+  title: 'COBACAM',
+  description: 'COBACAM - Sistema de Gestión de Asistencia',
 };
 
 export default function RootLayout({

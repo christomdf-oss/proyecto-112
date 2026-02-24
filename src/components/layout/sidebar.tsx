@@ -9,10 +9,9 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Users, History, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, History, Settings, Building } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Separator } from '../ui/separator';
 
 const AppSidebar = () => {
@@ -31,23 +30,16 @@ const AppSidebar = () => {
       variant="sidebar"
     >
       <SidebarHeader className="h-16 flex items-center justify-center">
-        <Link href="/" className="flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-8 w-8 text-primary"
-          >
-            <path d="M9 12l2 2 4-4" />
-            <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
-          </svg>
-          <span className="font-bold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-            CampusCheck
-          </span>
+        <Link href="/" className="flex items-center gap-3">
+          <Building className="h-8 w-8 text-primary shrink-0" />
+          <div className="flex flex-col">
+            <span className="font-bold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+              COBACAM
+            </span>
+              <span className="text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+              Plantel 10 Chicbul
+            </span>
+          </div>
         </Link>
       </SidebarHeader>
       <Separator />

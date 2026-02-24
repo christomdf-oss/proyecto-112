@@ -1,6 +1,6 @@
-# Guía de Configuración de CampusCheck
+# Guía de Configuración de COBACAM
 
-Esta guía proporciona información sobre cómo configurar los componentes de backend necesarios para que la aplicación CampusCheck funcione correctamente.
+Esta guía proporciona información sobre cómo configurar los componentes de backend necesarios para que la aplicación COBACAM funcione correctamente.
 
 ## 1. Reglas de Seguridad de Firestore
 
