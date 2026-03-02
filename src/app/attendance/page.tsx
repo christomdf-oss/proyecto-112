@@ -5,15 +5,12 @@ import { getAttendance, getStudents } from '@/lib/data';
 import { PageHeader } from '@/components/page-header';
 import AttendanceCalendar from './attendance-calendar';
 import DailyAttendanceList from './daily-attendance-list';
-import { isSameDay, format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { isSameDay, format, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card } from '@/components/ui/card';
 import type { Student, Attendance, ProcessedAttendance } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Download } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
+import { Download } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -192,46 +189,9 @@ export default function AttendancePage() {
     <div className="container mx-auto py-2">
       <PageHeader
         title="Historial de Asistencia"
-        description="Selecciona una fecha para ver los registros o exportarlos."
+        description="Selecciona una fecha en el calendario para ver los registros o exportarlos."
       >
         <div className="flex items-center gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={'outline'}
-                className={cn(
-                  'w-[280px] justify-start text-left font-normal',
-                  !selectedDate && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? (
-                  format(selectedDate, 'PPP', { locale: es })
-                ) : (
-                  <span>Selecciona una fecha</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                  }
-                }}
-                locale={es}
-                disabled={(date) =>
-                  date > new Date() || date < new Date('2020-01-01')
-                }
-                initialFocus
-                captionLayout="dropdown-buttons"
-                fromYear={2020}
-                toYear={new Date().getFullYear()}
-              />
-            </PopoverContent>
-          </Popover>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button>
