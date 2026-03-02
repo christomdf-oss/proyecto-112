@@ -5,7 +5,7 @@ import { getAttendance, getStudents } from '@/lib/data';
 import { PageHeader } from '@/components/page-header';
 import AttendanceCalendar from './attendance-calendar';
 import DailyAttendanceList from './daily-attendance-list';
-import { isSameDay, format } from 'date-fns';
+import { isSameDay, format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card } from '@/components/ui/card';
 import type { Student, Attendance, ProcessedAttendance } from '@/lib/types';
@@ -14,11 +14,20 @@ import { Calendar as CalendarIcon, Download } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import type * as XLSX from 'xlsx';
 
 export default function AttendancePage() {
   const attendanceData = React.useMemo(() => getAttendance(), []);
   const students = React.useMemo(() => getStudents(), []);
   const [selectedDate, setSelectedDate] = React.useState(new Date());
+  const { toast } = useToast();
 
   const processedAttendance = React.useMemo(() => {
     const attendanceForSelectedDay = attendanceData.filter((a) =>
@@ -72,35 +81,111 @@ export default function AttendancePage() {
     return new Set(attendanceData.map((a) => a.timestamp.toDateString()));
   }, [attendanceData]);
 
-  const handleExport = () => {
-    if (processedAttendance.length === 0) return;
+  const handleExport = async (exportType: 'day' | 'month') => {
+    const XLSX = await import('xlsx');
+    const studentsById = new Map(students.map((s) => [s.id, s]));
+    let dataToExport: (ProcessedAttendance & { date?: Date })[] = [];
+    let dateForFilename: string;
 
-    const headers = ['Alumno', 'Grupo', 'Entrada', 'Salida'];
-    const rows = processedAttendance.map((item) => [
-      `"${item.studentName.replace(/"/g, '""')}"`, // Escape quotes
-      item.grupo,
-      item.entrada
-        ? format(item.entrada, 'p', { locale: es })
-        : 'Sin registro',
-      item.salida
-        ? format(item.salida, 'p', { locale: es })
-        : 'Sin registro',
-    ]);
+    if (exportType === 'day') {
+      dataToExport = processedAttendance;
+      dateForFilename = format(selectedDate, 'yyyy-MM-dd');
+    } else {
+      const monthStart = startOfMonth(selectedDate);
+      const monthEnd = endOfMonth(selectedDate);
+      dateForFilename = format(monthStart, 'yyyy-MM');
 
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+      const attendanceForMonth = attendanceData.filter(
+        (a) => a.timestamp >= monthStart && a.timestamp <= monthEnd
+      );
+
+      const monthlyData = new Map<string, Map<string, { entrada: Date | null; salida: Date | null }>>();
+
+      for (const item of attendanceForMonth) {
+        const dayString = item.timestamp.toDateString();
+        if (!monthlyData.has(dayString)) {
+          monthlyData.set(dayString, new Map());
+        }
+        const dayData = monthlyData.get(dayString)!;
+
+        if (!dayData.has(item.studentId)) {
+          dayData.set(item.studentId, { entrada: null, salida: null });
+        }
+        const studentRecords = dayData.get(item.studentId)!;
+
+        if (item.type === 'entrada') {
+          if (!studentRecords.entrada || item.timestamp < studentRecords.entrada) {
+            studentRecords.entrada = item.timestamp;
+          }
+        } else if (item.type === 'salida') {
+          if (!studentRecords.salida || item.timestamp > studentRecords.salida) {
+            studentRecords.salida = item.timestamp;
+          }
+        }
+      }
+      
+      const flatMonthData: (ProcessedAttendance & { date: Date })[] = [];
+      for (const [dayString, dayData] of monthlyData.entries()) {
+        for (const [studentId, times] of dayData.entries()) {
+          const student = studentsById.get(studentId);
+          if (student) {
+            flatMonthData.push({
+              date: new Date(dayString),
+              studentId: student.id,
+              studentName: student.nombre,
+              grupo: student.grupo,
+              ...times,
+            });
+          }
+        }
+      }
+      dataToExport = flatMonthData.sort((a,b) => a.date.getTime() - b.date.getTime() || a.studentName.localeCompare(b.studentName));
+    }
     
-    // Add BOM for Excel compatibility
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    if (dataToExport.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: "No hay datos para exportar",
+        description: `No se encontraron registros para el ${exportType === 'day' ? 'día' : 'mes'} seleccionado.`,
+      });
+      return;
+    };
 
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    const dateString = format(selectedDate, "yyyy-MM-dd");
-    link.setAttribute("download", `asistencia_${dateString}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const groupedByGrupo = dataToExport.reduce((acc, item) => {
+      const group = item.grupo;
+      if (!acc[group]) {
+        acc[group] = [];
+      }
+      acc[group].push(item);
+      return acc;
+    }, {} as Record<string, typeof dataToExport>);
+
+    const wb = XLSX.utils.book_new();
+
+    Object.keys(groupedByGrupo).sort().forEach(group => {
+      const groupData = groupedByGrupo[group];
+      let json_data;
+
+      if (exportType === 'day') {
+        json_data = groupData.map(item => ({
+            'Alumno': item.studentName,
+            'Entrada': item.entrada ? format(item.entrada, 'p', { locale: es }) : 'Sin registro',
+            'Salida': item.salida ? format(item.salida, 'p', { locale: es }) : 'Sin registro',
+        }));
+      } else {
+        json_data = groupData.map(item => ({
+            'Fecha': item.date ? format(item.date, 'eeee dd, MMMM', { locale: es }) : '',
+            'Alumno': item.studentName,
+            'Entrada': item.entrada ? format(item.entrada, 'p', { locale: es }) : 'Sin registro',
+            'Salida': item.salida ? format(item.salida, 'p', { locale: es }) : 'Sin registro',
+        }));
+      }
+
+      const ws = XLSX.utils.json_to_sheet(json_data);
+      XLSX.utils.book_append_sheet(wb, ws, `Grupo ${group}`);
+    });
+
+    XLSX.writeFile(wb, `asistencia_${exportType === 'day' ? 'diaria' : 'mensual'}_${dateForFilename}.xlsx`);
   };
 
   return (
@@ -147,10 +232,22 @@ export default function AttendancePage() {
               />
             </PopoverContent>
           </Popover>
-          <Button onClick={handleExport} disabled={processedAttendance.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Exportar
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button>
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleExport('day')}>
+                    Exportar Día
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('month')}>
+                    Exportar Mes
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </PageHeader>
       <Card>
