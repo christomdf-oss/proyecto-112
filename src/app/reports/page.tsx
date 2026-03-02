@@ -35,7 +35,6 @@ export default function ReportsPage() {
       filtered = filtered.filter(s => s.nombre.toLowerCase().includes(filters.name.toLowerCase()));
     }
     if (filters.group) {
-      // Allow searching for parts of a group name
       filtered = filtered.filter(s => s.grupo.toLowerCase().includes(filters.group.toLowerCase()));
     }
     setSearchResults(filtered);
