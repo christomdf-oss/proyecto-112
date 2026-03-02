@@ -29,15 +29,15 @@ export default function AttendancePage() {
         description="Selecciona una fecha en el calendario para ver los registros."
       />
       <Card>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
-          <div className="lg:col-span-2 md:border-r">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+          <div className="md:col-span-1 md:border-r">
             <AttendanceCalendar 
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
               daysWithAttendance={daysWithAttendance}
             />
           </div>
-          <div className="md:col-span-1 lg:col-span-1">
+          <div className="md:col-span-2">
             <DailyAttendanceList 
               date={selectedDate}
               attendance={attendanceForSelectedDay}
