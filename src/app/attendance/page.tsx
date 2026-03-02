@@ -1,15 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { getAttendance } from '@/lib/data';
+import { getAttendance, getStudents } from '@/lib/data';
 import { PageHeader } from '@/components/page-header';
 import AttendanceCalendar from './attendance-calendar';
 import DailyAttendanceList from './daily-attendance-list';
 import { isSameDay } from 'date-fns';
 import { Card } from '@/components/ui/card';
+import type { Student } from '@/lib/types';
 
 export default function AttendancePage() {
   const attendanceData = React.useMemo(() => getAttendance(), []);
+  const students = React.useMemo(() => getStudents(), []);
   const [selectedDate, setSelectedDate] = React.useState(new Date());
 
   const attendanceForSelectedDay = React.useMemo(() => {
@@ -39,6 +41,7 @@ export default function AttendancePage() {
             <DailyAttendanceList 
               date={selectedDate}
               attendance={attendanceForSelectedDay}
+              students={students}
             />
           </div>
         </div>
