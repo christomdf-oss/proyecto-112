@@ -30,7 +30,7 @@ export default function AttendancePage() {
     const attendanceForSelectedDay = attendanceData.filter((a) =>
       isSameDay(a.timestamp, selectedDate)
     );
-    const studentsById = new Map(students.map((s) => [s.id, s]));
+    const studentsById = new Map(students.map((s) => [s.matricula, s]));
     const attendanceByStudent = new Map<
       string,
       { entrada: Date | null; salida: Date | null }
@@ -80,7 +80,7 @@ export default function AttendancePage() {
 
   const handleExport = async (exportType: 'day' | 'month') => {
     const XLSX = await import('xlsx');
-    const studentsById = new Map(students.map((s) => [s.id, s]));
+    const studentsById = new Map(students.map((s) => [s.matricula, s]));
     let dateForFilename: string;
 
     if (exportType === 'day') {
@@ -145,7 +145,7 @@ export default function AttendancePage() {
       const totalSchoolDays = schoolDaysInMonth.size;
 
       const studentSummaryData = students.map(student => {
-        const studentAttendanceInMonth = attendanceForMonth.filter(a => a.studentId === student.id);
+        const studentAttendanceInMonth = attendanceForMonth.filter(a => a.studentId === student.matricula);
         const attendedDays = new Set(studentAttendanceInMonth.filter(a => a.type === 'entrada').map(a => a.timestamp.toDateString()));
         
         let lateEntries = 0;
@@ -235,7 +235,7 @@ export default function AttendancePage() {
           if (student) {
             flatMonthData.push({
               date: new Date(dayString),
-              studentId: student.id,
+              studentId: student.matricula,
               studentName: student.nombre,
               grupo: student.grupo,
               ...times,

@@ -19,14 +19,17 @@ import { StudentForm } from './student-form';
 import type { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
+// Infer the form values type from the StudentForm component
+type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
+
+
 export default function StudentsPage() {
   const [students, setStudents] = React.useState(() => getStudents());
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
   const { toast } = useToast();
 
-  const handleAddStudent = (data: Omit<Student, 'id' | 'id_huella'> & { id_huella: number }) => {
+  const handleAddStudent = (data: StudentFormValues) => {
     const newStudent: Student = {
-        id: `student_${Date.now()}`, // simple unique id
         ...data,
     };
     setStudents((prev) => [newStudent, ...prev]);

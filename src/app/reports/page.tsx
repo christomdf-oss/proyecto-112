@@ -14,25 +14,22 @@ export default function ReportsPage() {
   const allStudents = React.useMemo(() => getStudents(), []);
   const allAttendance = React.useMemo(() => getAttendance(), []);
 
-  const [filters, setFilters] = React.useState({ name: '', group: '', id: '', id_huella: '' });
+  const [filters, setFilters] = React.useState({ name: '', group: '', matricula: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   const [searchPerformed, setSearchPerformed] = React.useState(false);
 
   const handleSearch = () => {
     setSelectedStudent(null);
-    if (!filters.id && !filters.name && !filters.group && !filters.id_huella) {
+    if (!filters.matricula && !filters.name && !filters.group) {
         setSearchResults([]);
         setSearchPerformed(false);
         return;
     }
 
     let filtered = allStudents;
-    if (filters.id) {
-      filtered = filtered.filter(s => s.id.toLowerCase().includes(filters.id.toLowerCase()));
-    }
-    if (filters.id_huella) {
-      filtered = filtered.filter(s => s.id_huella.toString().includes(filters.id_huella));
+    if (filters.matricula) {
+      filtered = filtered.filter(s => s.matricula.toLowerCase().includes(filters.matricula.toLowerCase()));
     }
     if (filters.name) {
       filtered = filtered.filter(s => s.nombre.toLowerCase().includes(filters.name.toLowerCase()));
@@ -48,7 +45,7 @@ export default function ReportsPage() {
     setSelectedStudent(null);
     setSearchResults([]);
     setSearchPerformed(false);
-    setFilters({ name: '', group: '', id: '', id_huella: '' });
+    setFilters({ name: '', group: '', matricula: '' });
   }
 
   if (selectedStudent) {
@@ -65,20 +62,15 @@ export default function ReportsPage() {
     <div className="container mx-auto py-2">
       <PageHeader
         title="Consulta de Reportes"
-        description="Busca un alumno por nombre, grupo, ID de alumno o ID de huella para ver su reporte."
+        description="Busca un alumno por nombre, grupo o matrícula para ver su reporte."
       />
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
             <Input
-              placeholder="Buscar por ID de alumno..."
-              value={filters.id}
-              onChange={(e) => setFilters({ ...filters, id: e.target.value })}
-            />
-            <Input
-              placeholder="Buscar por ID de huella..."
-              value={filters.id_huella}
-              onChange={(e) => setFilters({ ...filters, id_huella: e.target.value })}
+              placeholder="Buscar por matrícula..."
+              value={filters.matricula}
+              onChange={(e) => setFilters({ ...filters, matricula: e.target.value })}
             />
             <Input
               placeholder="Buscar por nombre..."
@@ -110,7 +102,7 @@ export default function ReportsPage() {
                     <div className="rounded-md border max-h-[60vh] overflow-y-auto">
                         {searchResults.map((student) => (
                           <div
-                            key={student.id}
+                            key={student.matricula}
                             className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-accent cursor-pointer"
                             onClick={() => setSelectedStudent(student)}
                           >
@@ -119,8 +111,7 @@ export default function ReportsPage() {
                                 <p className="text-sm text-muted-foreground">Grupo {student.grupo}</p>
                             </div>
                             <div className="text-right text-xs text-muted-foreground">
-                                <p>ID Alumno: {student.id}</p>
-                                <p>ID Huella: #{student.id_huella}</p>
+                                <p>Matrícula: {student.matricula}</p>
                             </div>
                           </div>
                         ))}

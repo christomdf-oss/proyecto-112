@@ -20,15 +20,12 @@ export const columns: ColumnDef<Student>[] = [
     header: 'Nombre',
   },
   {
-    accessorKey: 'grupo',
-    header: 'Grupo',
+    accessorKey: 'matricula',
+    header: 'Matrícula',
   },
   {
-    accessorKey: 'id_huella',
-    header: 'ID de Huella',
-    cell: ({ row }) => {
-        return <Badge variant="outline">#{row.original.id_huella}</Badge>;
-    }
+    accessorKey: 'grupo',
+    header: 'Grupo',
   },
   {
     accessorKey: 'telefono_tutor',
@@ -51,9 +48,9 @@ export const columns: ColumnDef<Student>[] = [
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(student.id)}
+                onClick={() => navigator.clipboard.writeText(student.matricula)}
               >
-                Copiar ID de alumno
+                Copiar Matrícula
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Editar Perfil</DropdownMenuItem>

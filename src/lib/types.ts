@@ -1,7 +1,6 @@
 export type Student = {
-  id: string;
+  matricula: string;
   nombre: string;
-  id_huella: number;
   telefono_tutor: string;
   grupo: string;
 };

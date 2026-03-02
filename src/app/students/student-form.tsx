@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 
 const studentSchema = z.object({
   nombre: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
-  id_huella: z.coerce.number().min(1, { message: 'El ID de huella es obligatorio.' }),
+  matricula: z.string().min(1, { message: 'La matrícula es obligatoria.' }),
   telefono_tutor: z.string().min(10, { message: 'El teléfono debe tener al menos 10 caracteres.' }),
   grupo: z.string().min(3, { message: 'Por favor ingresa un grupo.' }),
 });
@@ -33,7 +33,7 @@ export function StudentForm({ onSubmit, onClose }: StudentFormProps) {
     resolver: zodResolver(studentSchema),
     defaultValues: {
         nombre: '',
-        id_huella: undefined,
+        matricula: '',
         telefono_tutor: '',
         grupo: '',
     },
@@ -62,12 +62,12 @@ export function StudentForm({ onSubmit, onClose }: StudentFormProps) {
         />
         <FormField
           control={form.control}
-          name="id_huella"
+          name="matricula"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>ID de Huella</FormLabel>
+              <FormLabel>Matrícula</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="Ej. 1024" {...field} />
+                <Input placeholder="Ej. 241010001" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

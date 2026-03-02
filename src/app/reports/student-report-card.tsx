@@ -20,9 +20,9 @@ export function StudentReportCard({ student, attendance, onBack }: StudentReport
     const studentAttendanceForMonth = React.useMemo(() => {
         const interval = { start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) };
         return attendance
-            .filter(a => a.studentId === student.id && isWithinInterval(a.timestamp, interval))
+            .filter(a => a.studentId === student.matricula && isWithinInterval(a.timestamp, interval))
             .sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
-    }, [student.id, attendance, currentMonth]);
+    }, [student.matricula, attendance, currentMonth]);
 
     const attendanceByDay = React.useMemo(() => {
         const days = new Map<string, { entrada: Date | null, salida: Date | null }>();
@@ -51,7 +51,7 @@ export function StudentReportCard({ student, attendance, onBack }: StudentReport
 
     return (
         <div className="container mx-auto py-2">
-            <PageHeader title={`Reporte de ${student.nombre}`} description={`Grupo: ${student.grupo} | ID: ${student.id}`}>
+            <PageHeader title={`Reporte de ${student.nombre}`} description={`Grupo: ${student.grupo} | Matrícula: ${student.matricula}`}>
                 <Button variant="outline" onClick={onBack}>
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Nueva Búsqueda

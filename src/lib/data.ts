@@ -9,12 +9,15 @@ const groups = ['101', '102', '203', '204', '301', '302'];
 const students: Student[] = Array.from({ length: 25 }, (_, i) => {
   const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
   const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+  const grupo = groups[Math.floor(Math.random() * groups.length)];
+  const year = new Date().getFullYear().toString().slice(-2);
+  const randomDigits = String(i + 1).padStart(4, '0');
+
   return {
-    id: `student_${i + 1}`,
+    matricula: `${year}${grupo}${randomDigits}`,
     nombre: `${firstName} ${lastName}`,
-    id_huella: 1000 + i,
     telefono_tutor: `+1-555-${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`,
-    grupo: groups[Math.floor(Math.random() * groups.length)],
+    grupo,
   };
 });
 
@@ -33,7 +36,7 @@ students.forEach(student => {
       if (entryTime < new Date()) {
         attendance.push({
           id: `att_${attendance.length + 1}`,
-          studentId: student.id,
+          studentId: student.matricula,
           studentName: student.nombre,
           timestamp: entryTime,
           type: 'entrada',
@@ -57,7 +60,7 @@ students.forEach(student => {
       if (exitTime < new Date()) {
         attendance.push({
           id: `att_${attendance.length + 1}`,
-          studentId: student.id,
+          studentId: student.matricula,
           studentName: student.nombre,
           timestamp: exitTime,
           type: 'salida',
