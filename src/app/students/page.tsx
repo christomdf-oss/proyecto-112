@@ -24,11 +24,6 @@ export default function StudentsPage() {
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
   const { toast } = useToast();
 
-  const uniqueGroups = React.useMemo(() => {
-    const groups = new Set(students.map((s) => s.grupo));
-    return Array.from(groups).sort();
-  }, [students]);
-
   const handleAddStudent = (data: Omit<Student, 'id' | 'id_huella'> & { id_huella: number }) => {
     const newStudent: Student = {
         id: `student_${Date.now()}`, // simple unique id
@@ -68,7 +63,7 @@ export default function StudentsPage() {
       </PageHeader>
       <Card>
         <CardContent className="pt-6">
-          <DataTable columns={columns} data={students} groups={uniqueGroups} />
+          <DataTable columns={columns} data={students} />
         </CardContent>
       </Card>
     </div>
