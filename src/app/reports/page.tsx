@@ -14,14 +14,14 @@ export default function ReportsPage() {
   const allStudents = React.useMemo(() => getStudents(), []);
   const allAttendance = React.useMemo(() => getAttendance(), []);
 
-  const [filters, setFilters] = React.useState({ name: '', group: '', id: '' });
+  const [filters, setFilters] = React.useState({ name: '', group: '', id: '', id_huella: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   const [searchPerformed, setSearchPerformed] = React.useState(false);
 
   const handleSearch = () => {
     setSelectedStudent(null);
-    if (!filters.id && !filters.name && !filters.group) {
+    if (!filters.id && !filters.name && !filters.group && !filters.id_huella) {
         setSearchResults([]);
         setSearchPerformed(false);
         return;
@@ -30,6 +30,9 @@ export default function ReportsPage() {
     let filtered = allStudents;
     if (filters.id) {
       filtered = filtered.filter(s => s.id.toLowerCase().includes(filters.id.toLowerCase()));
+    }
+    if (filters.id_huella) {
+      filtered = filtered.filter(s => s.id_huella.toString().includes(filters.id_huella));
     }
     if (filters.name) {
       filtered = filtered.filter(s => s.nombre.toLowerCase().includes(filters.name.toLowerCase()));
@@ -45,7 +48,7 @@ export default function ReportsPage() {
     setSelectedStudent(null);
     setSearchResults([]);
     setSearchPerformed(false);
-    setFilters({ name: '', group: '', id: '' });
+    setFilters({ name: '', group: '', id: '', id_huella: '' });
   }
 
   if (selectedStudent) {
@@ -62,15 +65,20 @@ export default function ReportsPage() {
     <div className="container mx-auto py-2">
       <PageHeader
         title="Consulta de Reportes"
-        description="Busca un alumno por nombre, grupo o ID para ver su reporte de asistencia."
+        description="Busca un alumno por nombre, grupo, ID de alumno o ID de huella para ver su reporte."
       />
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-2 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
             <Input
               placeholder="Buscar por ID de alumno..."
               value={filters.id}
               onChange={(e) => setFilters({ ...filters, id: e.target.value })}
+            />
+            <Input
+              placeholder="Buscar por ID de huella..."
+              value={filters.id_huella}
+              onChange={(e) => setFilters({ ...filters, id_huella: e.target.value })}
             />
             <Input
               placeholder="Buscar por nombre..."
@@ -82,6 +90,8 @@ export default function ReportsPage() {
               value={filters.group}
               onChange={(e) => setFilters({ ...filters, group: e.target.value })}
             />
+          </div>
+          <div className="flex justify-end gap-2 mb-6">
             <Button onClick={handleSearch} className="w-full sm:w-auto">
                 <Search className="mr-2 h-4 w-4" />
                 Buscar
@@ -108,7 +118,10 @@ export default function ReportsPage() {
                                 <p className="font-medium">{student.nombre}</p>
                                 <p className="text-sm text-muted-foreground">Grupo {student.grupo}</p>
                             </div>
-                            <p className="text-xs text-muted-foreground">ID: {student.id}</p>
+                            <div className="text-right text-xs text-muted-foreground">
+                                <p>ID Alumno: {student.id}</p>
+                                <p>ID Huella: #{student.id_huella}</p>
+                            </div>
                           </div>
                         ))}
                     </div>
