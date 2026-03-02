@@ -3,6 +3,7 @@ import type { Student, Attendance, NotificationLog } from './types';
 // Mock data generation
 const firstNames = ['Mateo', 'Sofía', 'Santiago', 'Valentina', 'Sebastián', 'Isabella', 'Leonardo', 'Camila', 'Emiliano', 'Valeria'];
 const lastNames = ['García', 'Rodríguez', 'González', 'Hernández', 'López', 'Martínez', 'Pérez', 'Sánchez', 'Ramírez', 'Flores'];
+const groups = ['101', '102', '203', '204', '301', '302'];
 
 
 const students: Student[] = Array.from({ length: 25 }, (_, i) => {
@@ -13,6 +14,7 @@ const students: Student[] = Array.from({ length: 25 }, (_, i) => {
     nombre: `${firstName} ${lastName}`,
     id_huella: 1000 + i,
     telefono_tutor: `+1-555-${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`,
+    grupo: groups[Math.floor(Math.random() * groups.length)],
   };
 });
 

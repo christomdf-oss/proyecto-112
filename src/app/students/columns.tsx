@@ -20,6 +20,10 @@ export const columns: ColumnDef<Student>[] = [
     header: 'Nombre',
   },
   {
+    accessorKey: 'grupo',
+    header: 'Grupo',
+  },
+  {
     accessorKey: 'id_huella',
     header: 'ID de Huella',
     cell: ({ row }) => {

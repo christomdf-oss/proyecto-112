@@ -3,6 +3,7 @@ export type Student = {
   nombre: string;
   id_huella: number;
   telefono_tutor: string;
+  grupo: string;
 };
 
 export type Attendance = {

@@ -23,15 +23,24 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  groups: string[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  groups,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -55,7 +64,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center py-4">
+      <div className="flex items-center gap-4 py-4">
         <Input
           placeholder="Filtrar por nombre..."
           value={(table.getColumn('nombre')?.getFilterValue() as string) ?? ''}
@@ -64,6 +73,21 @@ export function DataTable<TData, TValue>({
           }
           className="max-w-sm"
         />
+        <Select
+            onValueChange={(value) => {
+                table.getColumn('grupo')?.setFilterValue(value === 'all' ? '' : value);
+            }}
+        >
+            <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por grupo" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">Todos los grupos</SelectItem>
+                {groups.map((group) => (
+                    <SelectItem key={group} value={group}>{group}</SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
       </div>
       <div className="rounded-md border">
         <Table>
