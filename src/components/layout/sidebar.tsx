@@ -9,7 +9,13 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Users, History, Settings } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Users,
+  History,
+  Settings,
+  FileText,
+} from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Separator } from '../ui/separator';
@@ -22,6 +28,7 @@ const AppSidebar = () => {
     { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
     { href: '/students', label: 'Alumnos', icon: Users },
     { href: '/attendance', label: 'Asistencia', icon: History },
+    { href: '/reports', label: 'Reportes', icon: FileText },
   ];
 
   return (
