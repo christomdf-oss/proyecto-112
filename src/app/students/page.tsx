@@ -61,7 +61,6 @@ export default function StudentsPage() {
                 </DialogHeader>
                 <StudentForm 
                     onSubmit={handleAddStudent}
-                    groups={['101', '102', '203', '204', '301', '302']}
                     onClose={() => setIsAddStudentOpen(false)}
                 />
             </DialogContent>

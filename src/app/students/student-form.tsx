@@ -13,30 +13,22 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 const studentSchema = z.object({
   nombre: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
   id_huella: z.coerce.number().min(1, { message: 'El ID de huella es obligatorio.' }),
   telefono_tutor: z.string().min(10, { message: 'El teléfono debe tener al menos 10 caracteres.' }),
-  grupo: z.string().min(3, { message: 'Por favor selecciona un grupo.' }),
+  grupo: z.string().min(3, { message: 'Por favor ingresa un grupo.' }),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
 
 interface StudentFormProps {
   onSubmit: (data: StudentFormValues) => void;
-  groups: string[];
   onClose: () => void;
 }
 
-export function StudentForm({ onSubmit, groups, onClose }: StudentFormProps) {
+export function StudentForm({ onSubmit, onClose }: StudentFormProps) {
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -100,20 +92,9 @@ export function StudentForm({ onSubmit, groups, onClose }: StudentFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Grupo</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un grupo" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {groups.map((group) => (
-                    <SelectItem key={group} value={group}>
-                      {group}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <Input placeholder="Ej. 101" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
