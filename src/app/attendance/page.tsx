@@ -115,7 +115,7 @@ export default function AttendancePage() {
               <Button
                 variant={'outline'}
                 className={cn(
-                  'w-[240px] justify-start text-left font-normal',
+                  'w-[280px] justify-start text-left font-normal',
                   !selectedDate && 'text-muted-foreground'
                 )}
               >
@@ -131,12 +131,19 @@ export default function AttendancePage() {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                  }
+                }}
                 locale={es}
                 disabled={(date) =>
-                  date > new Date() || date < new Date('1900-01-01')
+                  date > new Date() || date < new Date('2020-01-01')
                 }
                 initialFocus
+                captionLayout="dropdown-buttons"
+                fromYear={2020}
+                toYear={new Date().getFullYear()}
               />
             </PopoverContent>
           </Popover>
