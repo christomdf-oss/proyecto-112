@@ -22,3 +22,11 @@ export type NotificationLog = {
   status: 'success' | 'failed';
   reason?: string;
 };
+
+export type ProcessedAttendance = {
+  studentId: string;
+  studentName: string;
+  grupo: string;
+  entrada: Date | null;
+  salida: Date | null;
+};
