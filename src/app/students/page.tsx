@@ -12,12 +12,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { DataTable } from './data-table';
-import { columns } from './columns';
+import { getColumns } from './columns';
 import { getStudents } from '@/lib/data';
 import { PageHeader } from '@/components/page-header';
 import { StudentForm } from './student-form';
 import type { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { EnrollFingerprintDialog } from './enroll-fingerprint-dialog';
 
 // Infer the form values type from the StudentForm component
 type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
@@ -26,6 +27,7 @@ type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (
 export default function StudentsPage() {
   const [students, setStudents] = React.useState(() => getStudents());
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
+  const [enrollmentStudent, setEnrollmentStudent] = React.useState<Student | null>(null);
   const { toast } = useToast();
 
   const handleAddStudent = (data: StudentFormValues) => {
@@ -40,6 +42,25 @@ export default function StudentsPage() {
         description: `${data.nombre} ha sido agregado exitosamente.`,
     })
   };
+  
+  const handleOpenEnrollDialog = (student: Student) => {
+    setEnrollmentStudent(student);
+  };
+  
+  const handleCloseEnrollDialog = () => {
+    setEnrollmentStudent(null);
+  };
+
+  const handleEnrollSuccess = (matricula: string) => {
+    setStudents(prev => 
+      prev.map(s => 
+        s.matricula === matricula ? { ...s, fingerprintRegistered: true } : s
+      )
+    );
+    // The dialog will be closed after success message is shown
+  };
+  
+  const studentColumns = getColumns({ onEnroll: handleOpenEnrollDialog });
 
   return (
     <div className="container mx-auto py-2">
@@ -67,9 +88,17 @@ export default function StudentsPage() {
       </PageHeader>
       <Card>
         <CardContent className="pt-6">
-          <DataTable columns={columns} data={students} />
+          <DataTable columns={studentColumns} data={students} />
         </CardContent>
       </Card>
+      
+      {enrollmentStudent && (
+        <EnrollFingerprintDialog 
+            student={enrollmentStudent}
+            onSuccess={handleEnrollSuccess}
+            onClose={handleCloseEnrollDialog}
+        />
+      )}
     </div>
   );
 }

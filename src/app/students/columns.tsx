@@ -14,7 +14,7 @@ import {
 import type { Student } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 
-export const columns: ColumnDef<Student>[] = [
+export const getColumns = ({ onEnroll }: { onEnroll: (student: Student) => void }): ColumnDef<Student>[] => [
   {
     accessorKey: 'nombre',
     header: 'Nombre',
@@ -64,6 +64,11 @@ export const columns: ColumnDef<Student>[] = [
               >
                 Copiar Matrícula
               </DropdownMenuItem>
+              {!student.fingerprintRegistered && (
+                <DropdownMenuItem onClick={() => onEnroll(student)}>
+                  Registrar Huella
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem>Editar Perfil</DropdownMenuItem>
               <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">Eliminar Perfil</DropdownMenuItem>
