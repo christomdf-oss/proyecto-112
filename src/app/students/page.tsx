@@ -31,6 +31,7 @@ export default function StudentsPage() {
   const handleAddStudent = (data: StudentFormValues) => {
     const newStudent: Student = {
         ...data,
+        fingerprintRegistered: false,
     };
     setStudents((prev) => [newStudent, ...prev]);
     setIsAddStudentOpen(false);

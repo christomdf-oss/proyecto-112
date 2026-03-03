@@ -28,6 +28,18 @@ export const columns: ColumnDef<Student>[] = [
     header: 'Grupo',
   },
   {
+    accessorKey: 'fingerprintRegistered',
+    header: 'Estado Huella',
+    cell: ({ row }) => {
+      const isRegistered = row.getValue('fingerprintRegistered');
+      return isRegistered ? (
+        <Badge variant="success">Registrada</Badge>
+      ) : (
+        <Badge variant="destructive">Pendiente</Badge>
+      );
+    },
+  },
+  {
     accessorKey: 'telefono_tutor',
     header: "Teléfono del Tutor",
   },

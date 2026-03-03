@@ -20,6 +20,7 @@ const students: Student[] = Array.from({ length: 280 }, (_, i) => {
     nombre: `${firstName} ${lastName1} ${lastName2}`,
     telefono_tutor: `+1-555-${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`,
     grupo,
+    fingerprintRegistered: Math.random() > 0.1, // 90% have fingerprints
   };
 });
 

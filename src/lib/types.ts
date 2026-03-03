@@ -3,6 +3,7 @@ export type Student = {
   nombre: string;
   telefono_tutor: string;
   grupo: string;
+  fingerprintRegistered?: boolean;
 };
 
 export type Attendance = {
