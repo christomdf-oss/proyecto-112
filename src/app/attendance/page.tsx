@@ -330,7 +330,7 @@ export default function AttendancePage() {
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="presentes">Presentes ({processedAttendance.length})</TabsTrigger>
                         <TabsTrigger value="ausentes">Ausentes ({absentStudents.length})</TabsTrigger>
-                        <TabsTrigger value="justificados">Justificados ({justifiedRecords.length})</TabsTrigger>
+                        <TabsTrigger value="manuales">Manuales ({justifiedRecords.length})</TabsTrigger>
                     </TabsList>
                 </div>
                 <TabsContent value="presentes">
@@ -345,7 +345,7 @@ export default function AttendancePage() {
                     absentStudents={absentStudents}
                     />
                 </TabsContent>
-                <TabsContent value="justificados">
+                <TabsContent value="manuales">
                     <JustifiedList 
                         date={selectedDate}
                         justifiedRecords={justifiedRecords}

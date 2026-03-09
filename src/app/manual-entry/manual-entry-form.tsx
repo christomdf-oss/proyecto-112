@@ -103,25 +103,25 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                                     <FormControl>
                                                         <RadioGroupItem value="entrada" />
                                                     </FormControl>
-                                                    <FormLabel className="font-normal">Registrar Entrada</FormLabel>
+                                                    <FormLabel className="font-normal">Registrar Entrada Manual</FormLabel>
                                                 </FormItem>
                                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                                     <FormControl>
                                                         <RadioGroupItem value="salida" />
                                                     </FormControl>
-                                                    <FormLabel className="font-normal">Registrar Salida</FormLabel>
+                                                    <FormLabel className="font-normal">Registrar Salida Manual</FormLabel>
                                                 </FormItem>
                                                  <FormItem className="flex items-center space-x-3 space-y-0">
                                                     <FormControl>
                                                         <RadioGroupItem value="justificacion" />
                                                     </FormControl>
-                                                    <FormLabel className="font-normal">Justificar Ausencia (no afecta asistencia)</FormLabel>
+                                                    <FormLabel className="font-normal">Justificar Ausencia (día completo, no afecta asistencia)</FormLabel>
                                                 </FormItem>
                                                  <FormItem className="flex items-center space-x-3 space-y-0">
                                                     <FormControl>
                                                         <RadioGroupItem value="permiso" />
                                                     </FormControl>
-                                                    <FormLabel className="font-normal">Registrar Permiso Temporal (no afecta asistencia)</FormLabel>
+                                                    <FormLabel className="font-normal">Registrar Permiso (salida temporal, no afecta asistencia)</FormLabel>
                                                 </FormItem>
                                             </RadioGroup>
                                         </FormControl>

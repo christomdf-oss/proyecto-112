@@ -45,10 +45,10 @@ export default function JustifiedList({
     <>
       <CardHeader>
         <CardTitle className="capitalize">
-          Registros Manuales y Justificaciones
+          Registros Manuales
         </CardTitle>
         <CardDescription>
-          {justifiedRecords.length} registro(s) manuales para el {format(date, "d 'de' MMMM", { locale: es })}.
+          {justifiedRecords.length} registro(s) manual(es) para el {format(date, "d 'de' MMMM", { locale: es })}.
         </CardDescription>
       </CardHeader>
       <CardContent className="h-[430px] overflow-y-auto">
