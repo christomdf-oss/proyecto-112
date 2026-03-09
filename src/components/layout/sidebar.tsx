@@ -15,6 +15,7 @@ import {
   History,
   Settings,
   FileText,
+  PenSquare,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -29,6 +30,7 @@ const AppSidebar = () => {
     { href: '/students', label: 'Alumnos', icon: Users },
     { href: '/attendance', label: 'Asistencia', icon: History },
     { href: '/reports', label: 'Reportes', icon: FileText },
+    { href: '/manual-entry', label: 'Registro Manual', icon: PenSquare },
   ];
 
   return (

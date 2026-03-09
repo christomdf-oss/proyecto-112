@@ -13,6 +13,8 @@ export type Attendance = {
   studentName: string; // Denormalized for easy display
   timestamp: Date;
   type: 'entrada' | 'salida';
+  isManual?: boolean;
+  reason?: string;
 };
 
 export type NotificationLog = {
