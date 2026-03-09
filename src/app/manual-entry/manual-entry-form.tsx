@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Student } from '@/lib/types';
+import type { Student, Attendance } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,17 +26,23 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 const manualEntrySchema = z.object({
-  type: z.enum(['entrada', 'salida'], { required_error: 'Debes seleccionar un tipo.' }),
+  type: z.enum(['entrada', 'salida', 'justificacion', 'permiso'], { required_error: 'Debes seleccionar un tipo.' }),
   date: z.date({ required_error: 'Debes seleccionar una fecha.' }),
-  time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: 'Formato de hora inválido (HH:MM).' }),
+  time: z.string().optional(),
   reason: z.string().min(5, { message: 'El motivo debe tener al menos 5 caracteres.' }).max(200, { message: 'El motivo no puede exceder los 200 caracteres.'}),
+}).refine(data => {
+    if (data.type === 'justificacion') return true; // time is not required
+    return !!data.time && /^([01]\d|2[0-3]):([0-5]\d)$/.test(data.time);
+}, {
+    message: 'La hora (HH:MM) es requerida para este tipo de registro.',
+    path: ['time'],
 });
 
 type ManualEntryFormValues = z.infer<typeof manualEntrySchema>;
 
 interface ManualEntryFormProps {
     student: Student;
-    onSubmit: (data: { type: 'entrada' | 'salida', timestamp: Date, reason: string }) => void;
+    onSubmit: (data: { type: Attendance['type'], timestamp: Date, reason: string }) => void;
     onBack: () => void;
 }
 
@@ -51,10 +57,17 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
         },
     });
 
+    const type = form.watch('type');
+
     const handleSubmit = (data: ManualEntryFormValues) => {
-        const [hours, minutes] = data.time.split(':').map(Number);
         const timestamp = new Date(data.date);
-        timestamp.setHours(hours, minutes, 0, 0);
+        if (data.type !== 'justificacion' && data.time) {
+            const [hours, minutes] = data.time.split(':').map(Number);
+            timestamp.setHours(hours, minutes, 0, 0);
+        } else {
+            // For justifications, use the start of the day
+            timestamp.setHours(0, 0, 0, 0);
+        }
 
         onSubmit({ type: data.type, timestamp, reason: data.reason });
     };
@@ -69,7 +82,7 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
             </PageHeader>
             <Card>
                 <CardHeader>
-                    <CardTitle>Añadir Registro Manual de Asistencia</CardTitle>
+                    <CardTitle>Añadir Registro Manual</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -84,19 +97,31 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                             <RadioGroup
                                                 onValueChange={field.onChange}
                                                 defaultValue={field.value}
-                                                className="flex flex-col space-y-1"
+                                                className="flex flex-col space-y-2"
                                             >
                                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                                     <FormControl>
                                                         <RadioGroupItem value="entrada" />
                                                     </FormControl>
-                                                    <FormLabel className="font-normal">Entrada</FormLabel>
+                                                    <FormLabel className="font-normal">Registrar Entrada</FormLabel>
                                                 </FormItem>
                                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                                     <FormControl>
                                                         <RadioGroupItem value="salida" />
                                                     </FormControl>
-                                                    <FormLabel className="font-normal">Salida</FormLabel>
+                                                    <FormLabel className="font-normal">Registrar Salida</FormLabel>
+                                                </FormItem>
+                                                 <FormItem className="flex items-center space-x-3 space-y-0">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="justificacion" />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal">Justificar Ausencia (no afecta asistencia)</FormLabel>
+                                                </FormItem>
+                                                 <FormItem className="flex items-center space-x-3 space-y-0">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="permiso" />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal">Registrar Permiso Temporal (no afecta asistencia)</FormLabel>
                                                 </FormItem>
                                             </RadioGroup>
                                         </FormControl>
@@ -132,10 +157,11 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-auto p-0" align="start">
                                                     <Calendar
+                                                        locale={es}
                                                         mode="single"
                                                         selected={field.value}
                                                         onSelect={field.onChange}
-                                                        disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+                                                        disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
                                                         initialFocus
                                                     />
                                                 </PopoverContent>
@@ -144,19 +170,21 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="time"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Hora (formato 24h)</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="HH:MM" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                {type !== 'justificacion' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="time"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Hora (formato 24h)</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="HH:MM" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                             </div>
                             <FormField
                                 control={form.control}

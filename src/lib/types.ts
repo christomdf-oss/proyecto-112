@@ -12,7 +12,7 @@ export type Attendance = {
   studentId: string;
   studentName: string; // Denormalized for easy display
   timestamp: Date;
-  type: 'entrada' | 'salida';
+  type: 'entrada' | 'salida' | 'justificacion' | 'permiso';
   isManual?: boolean;
   reason?: string;
 };

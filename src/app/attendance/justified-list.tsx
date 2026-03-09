@@ -19,6 +19,24 @@ interface JustifiedListProps {
   justifiedRecords: Attendance[];
 }
 
+type BadgeVariant = 'success' | 'destructive' | 'secondary' | 'outline' | 'default';
+
+const getBadgeProps = (type: Attendance['type']): { variant: BadgeVariant, text: string } => {
+    switch (type) {
+        case 'entrada':
+            return { variant: 'success', text: 'Entrada' };
+        case 'salida':
+            return { variant: 'destructive', text: 'Salida' };
+        case 'justificacion':
+            return { variant: 'secondary', text: 'Justificación' };
+        case 'permiso':
+            return { variant: 'outline', text: 'Permiso' };
+        default:
+            return { variant: 'default', text: type };
+    }
+}
+
+
 export default function JustifiedList({
   date,
   justifiedRecords,
@@ -36,32 +54,36 @@ export default function JustifiedList({
       <CardContent className="h-[430px] overflow-y-auto">
         {justifiedRecords.length > 0 ? (
           <div className="space-y-6">
-            {justifiedRecords.map((item) => (
-              <div key={item.id} className="flex items-start gap-4">
-                <Avatar className="h-9 w-9 border">
-                  <AvatarFallback>
-                    {item.studentName
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1.5 w-full">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium leading-none">
-                      {item.studentName}
-                    </p>
-                    <Badge variant={item.type === 'entrada' ? 'success' : 'destructive'} className="capitalize">
-                      {item.type} @ {format(item.timestamp, 'p', { locale: es })}
-                    </Badge>
-                  </div>
-                  <div className="flex items-start text-sm text-muted-foreground gap-2 pt-1">
-                    <FileText className="h-4 w-4 mt-0.5 shrink-0" />
-                    <span>{item.reason}</span>
+            {justifiedRecords.map((item) => {
+              const badgeProps = getBadgeProps(item.type);
+              return (
+                <div key={item.id} className="flex items-start gap-4">
+                  <Avatar className="h-9 w-9 border">
+                    <AvatarFallback>
+                      {item.studentName
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid gap-1.5 w-full">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-medium leading-none">
+                        {item.studentName}
+                      </p>
+                      <Badge variant={badgeProps.variant} className="capitalize">
+                        {badgeProps.text}
+                        {item.type !== 'justificacion' && ` @ ${format(item.timestamp, 'p', { locale: es })}`}
+                      </Badge>
+                    </div>
+                    <div className="flex items-start text-sm text-muted-foreground gap-2 pt-1">
+                      <FileText className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>{item.reason}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-center text-muted-foreground">
