@@ -13,23 +13,12 @@ import {
   isSameMonth,
   isSameDay,
   isToday,
-  getYear,
-  getMonth,
-  setYear,
-  setMonth,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CardHeader, CardContent } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface AttendanceCalendarProps {
   selectedDate: Date;
@@ -47,22 +36,6 @@ export default function AttendanceCalendar({ selectedDate, onDateChange, daysWit
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
-  const years = React.useMemo(() => Array.from({ length: 21 }, (_, i) => getYear(new Date()) - 10 + i), []);
-  const months = React.useMemo(() => Array.from({ length: 12 }, (_, i) => ({
-    value: i,
-    label: format(new Date(2000, i), 'MMMM', { locale: es }),
-  })), []);
-
-  const handleYearChange = (year: string) => {
-    const newDate = setYear(currentMonth, parseInt(year, 10));
-    setCurrentMonth(newDate);
-  };
-
-  const handleMonthChange = (month: string) => {
-    const newDate = setMonth(currentMonth, parseInt(month, 10));
-    setCurrentMonth(newDate);
-  };
-
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const startDate = startOfWeek(monthStart, { locale: es });
@@ -72,40 +45,11 @@ export default function AttendanceCalendar({ selectedDate, onDateChange, daysWit
 
   return (
     <>
-      <CardHeader className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div className="flex w-full lg:w-auto gap-2 items-center">
-            <Select
-                value={getMonth(currentMonth).toString()}
-                onValueChange={handleMonthChange}
-            >
-                <SelectTrigger className="w-full lg:w-[140px] capitalize focus:ring-0">
-                    <SelectValue placeholder="Mes" />
-                </SelectTrigger>
-                <SelectContent>
-                    {months.map((month) => (
-                        <SelectItem key={month.value} value={month.value.toString()} className="capitalize">
-                            {month.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Select
-                value={getYear(currentMonth).toString()}
-                onValueChange={handleYearChange}
-            >
-                <SelectTrigger className="w-full lg:w-[100px] focus:ring-0">
-                    <SelectValue placeholder="Año" />
-                </SelectTrigger>
-                <SelectContent>
-                    {years.map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
-                            {year}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-        <div className="flex gap-2 self-end lg:self-center">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <h2 className="text-lg font-semibold capitalize">
+            {format(currentMonth, 'MMMM yyyy', { locale: es })}
+        </h2>
+        <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={prevMonth}>
             <ChevronLeft className="h-4 w-4" />
           </Button>

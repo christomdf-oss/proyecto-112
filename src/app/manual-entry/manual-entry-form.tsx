@@ -175,7 +175,7 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                         control={form.control}
                                         name="time"
                                         render={({ field }) => (
-                                            <FormItem>
+                                            <FormItem className="flex flex-col">
                                                 <FormLabel>Hora (formato 24h)</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="HH:MM" {...field} />
