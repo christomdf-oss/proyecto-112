@@ -5,9 +5,11 @@ import { getAttendance, getStudents } from '@/lib/data';
 import { PageHeader } from '@/components/page-header';
 import AttendanceCalendar from './attendance-calendar';
 import DailyAttendanceList from './daily-attendance-list';
+import DailyAbsenceList from './daily-absence-list';
 import { isSameDay, format, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Student, Attendance, ProcessedAttendance } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
@@ -22,7 +24,7 @@ import type * as XLSX from 'xlsx';
 
 export default function AttendancePage() {
   const attendanceData = React.useMemo(() => getAttendance(), []);
-  const students = React.useMemo(() => getStudents(), []);
+  const allStudents = React.useMemo(() => getStudents(), []);
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const { toast } = useToast();
 
@@ -30,7 +32,7 @@ export default function AttendancePage() {
     const attendanceForSelectedDay = attendanceData.filter((a) =>
       isSameDay(a.timestamp, selectedDate)
     );
-    const studentsById = new Map(students.map((s) => [s.matricula, s]));
+    const studentsById = new Map(allStudents.map((s) => [s.matricula, s]));
     const attendanceByStudent = new Map<
       string,
       { entrada: Date | null; salida: Date | null }
@@ -72,7 +74,13 @@ export default function AttendancePage() {
 
     result.sort((a, b) => a.studentName.localeCompare(b.studentName));
     return result;
-  }, [attendanceData, students, selectedDate]);
+  }, [attendanceData, allStudents, selectedDate]);
+
+  const absentStudents = React.useMemo(() => {
+    // An absent student is one who does not have an 'entrada' record.
+    const presentStudentIds = new Set(processedAttendance.filter(pa => pa.entrada).map(a => a.studentId));
+    return allStudents.filter(student => !presentStudentIds.has(student.matricula)).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [allStudents, processedAttendance]);
 
   const daysWithAttendance = React.useMemo(() => {
     return new Set(attendanceData.map((a) => a.timestamp.toDateString()));
@@ -80,7 +88,7 @@ export default function AttendancePage() {
 
   const handleExport = async (exportType: 'day' | 'month') => {
     const XLSX = await import('xlsx');
-    const studentsById = new Map(students.map((s) => [s.matricula, s]));
+    const studentsById = new Map(allStudents.map((s) => [s.matricula, s]));
     let dateForFilename: string;
 
     if (exportType === 'day') {
@@ -144,7 +152,7 @@ export default function AttendancePage() {
       const schoolDaysInMonth = new Set(attendanceForMonth.map(a => a.timestamp.toDateString()));
       const totalSchoolDays = schoolDaysInMonth.size;
 
-      const studentSummaryData = students.map(student => {
+      const studentSummaryData = allStudents.map(student => {
         const studentAttendanceInMonth = attendanceForMonth.filter(a => a.studentId === student.matricula);
         const attendedDays = new Set(studentAttendanceInMonth.filter(a => a.type === 'entrada').map(a => a.timestamp.toDateString()));
         
@@ -276,7 +284,7 @@ export default function AttendancePage() {
     <div className="container mx-auto py-2">
       <PageHeader
         title="Historial de Asistencia"
-        description="Selecciona una fecha en el calendario para ver los registros o exportarlos."
+        description="Selecciona una fecha para revisar los alumnos presentes o ausentes."
       >
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -307,10 +315,26 @@ export default function AttendancePage() {
             />
           </div>
           <div className="md:col-span-2">
-            <DailyAttendanceList
-              date={selectedDate}
-              processedAttendance={processedAttendance}
-            />
+            <Tabs defaultValue="presentes" className="w-full">
+                <div className="p-6 pb-0">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="presentes">Presentes ({processedAttendance.length})</TabsTrigger>
+                        <TabsTrigger value="ausentes">Ausentes ({absentStudents.length})</TabsTrigger>
+                    </TabsList>
+                </div>
+                <TabsContent value="presentes">
+                    <DailyAttendanceList
+                    date={selectedDate}
+                    processedAttendance={processedAttendance}
+                    />
+                </TabsContent>
+                <TabsContent value="ausentes">
+                    <DailyAbsenceList
+                    date={selectedDate}
+                    absentStudents={absentStudents}
+                    />
+                </TabsContent>
+            </Tabs>
           </div>
         </div>
       </Card>

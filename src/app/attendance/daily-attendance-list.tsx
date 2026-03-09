@@ -25,10 +25,10 @@ export default function DailyAttendanceList({
     <>
       <CardHeader>
         <CardTitle className="capitalize">
-          {format(date, "eeee, d 'de' MMMM", { locale: es })}
+          Alumnos Presentes
         </CardTitle>
         <CardDescription>
-          {processedAttendance.length} alumno(s) con registros.
+          {processedAttendance.length} alumno(s) con registro de entrada para el {format(date, "d 'de' MMMM", { locale: es })}.
         </CardDescription>
       </CardHeader>
       <CardContent className="h-[430px] overflow-y-auto">
