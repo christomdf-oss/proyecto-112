@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/page-header';
 import AttendanceCalendar from './attendance-calendar';
 import DailyAttendanceList from './daily-attendance-list';
 import DailyAbsenceList from './daily-absence-list';
+import JustifiedList from './justified-list';
 import { isSameDay, format, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card } from '@/components/ui/card';
@@ -29,6 +30,7 @@ export default function AttendancePage() {
   const { toast } = useToast();
 
   const processedAttendance = React.useMemo(() => {
+    // This logic correctly includes manual 'entrada' in the present list.
     const attendanceForSelectedDay = attendanceData.filter((a) =>
       isSameDay(a.timestamp, selectedDate)
     );
@@ -81,6 +83,13 @@ export default function AttendancePage() {
     const presentStudentIds = new Set(processedAttendance.filter(pa => pa.entrada).map(a => a.studentId));
     return allStudents.filter(student => !presentStudentIds.has(student.matricula)).sort((a, b) => a.nombre.localeCompare(b.nombre));
   }, [allStudents, processedAttendance]);
+
+  // NEW: Get justified records for the selected date
+  const justifiedRecords = React.useMemo(() => {
+    return attendanceData.filter(
+      (a) => isSameDay(a.timestamp, selectedDate) && a.isManual
+    ).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, [attendanceData, selectedDate]);
 
   const daysWithAttendance = React.useMemo(() => {
     return new Set(attendanceData.map((a) => a.timestamp.toDateString()));
@@ -285,7 +294,7 @@ export default function AttendancePage() {
     <div className="container mx-auto py-2">
       <PageHeader
         title="Historial de Asistencia"
-        description="Selecciona una fecha para revisar los alumnos presentes o ausentes."
+        description="Selecciona una fecha para revisar los registros del día."
       >
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -318,9 +327,10 @@ export default function AttendancePage() {
           <div className="md:col-span-2">
             <Tabs defaultValue="presentes" className="w-full">
                 <div className="p-6 pb-0">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="presentes">Presentes ({processedAttendance.length})</TabsTrigger>
                         <TabsTrigger value="ausentes">Ausentes ({absentStudents.length})</TabsTrigger>
+                        <TabsTrigger value="justificados">Justificados ({justifiedRecords.length})</TabsTrigger>
                     </TabsList>
                 </div>
                 <TabsContent value="presentes">
@@ -333,6 +343,12 @@ export default function AttendancePage() {
                     <DailyAbsenceList
                     date={selectedDate}
                     absentStudents={absentStudents}
+                    />
+                </TabsContent>
+                <TabsContent value="justificados">
+                    <JustifiedList 
+                        date={selectedDate}
+                        justifiedRecords={justifiedRecords}
                     />
                 </TabsContent>
             </Tabs>
