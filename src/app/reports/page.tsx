@@ -14,14 +14,14 @@ export default function ReportsPage() {
   const allStudents = React.useMemo(() => getStudents(), []);
   const allAttendance = React.useMemo(() => getAttendance(), []);
 
-  const [filters, setFilters] = React.useState({ name: '', group: '', matricula: '' });
+  const [filters, setFilters] = React.useState({ name: '', group: '', matricula: '', comunidad: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   const [searchPerformed, setSearchPerformed] = React.useState(false);
 
   const handleSearch = () => {
     setSelectedStudent(null);
-    if (!filters.matricula && !filters.name && !filters.group) {
+    if (!filters.matricula && !filters.name && !filters.group && !filters.comunidad) {
         setSearchResults([]);
         setSearchPerformed(false);
         return;
@@ -37,6 +37,9 @@ export default function ReportsPage() {
     if (filters.group) {
       filtered = filtered.filter(s => s.grupo.toLowerCase().includes(filters.group.toLowerCase()));
     }
+    if (filters.comunidad) {
+        filtered = filtered.filter(s => s.comunidad.toLowerCase().includes(filters.comunidad.toLowerCase()));
+    }
     setSearchResults(filtered);
     setSearchPerformed(true);
   };
@@ -45,7 +48,7 @@ export default function ReportsPage() {
     setSelectedStudent(null);
     setSearchResults([]);
     setSearchPerformed(false);
-    setFilters({ name: '', group: '', matricula: '' });
+    setFilters({ name: '', group: '', matricula: '', comunidad: '' });
   }
 
   if (selectedStudent) {
@@ -66,7 +69,7 @@ export default function ReportsPage() {
       />
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
             <Input
               placeholder="Buscar por matrícula..."
               value={filters.matricula}
@@ -81,6 +84,11 @@ export default function ReportsPage() {
               placeholder="Buscar por grupo..."
               value={filters.group}
               onChange={(e) => setFilters({ ...filters, group: e.target.value })}
+            />
+             <Input
+              placeholder="Buscar por comunidad..."
+              value={filters.comunidad}
+              onChange={(e) => setFilters({ ...filters, comunidad: e.target.value })}
             />
           </div>
           <div className="flex justify-end gap-2 mb-6">
@@ -108,7 +116,7 @@ export default function ReportsPage() {
                           >
                             <div>
                                 <p className="font-medium">{student.nombre}</p>
-                                <p className="text-sm text-muted-foreground">Grupo {student.grupo}</p>
+                                <p className="text-sm text-muted-foreground">Grupo {student.grupo} - {student.comunidad}</p>
                             </div>
                             <div className="text-right text-xs text-muted-foreground">
                                 <p>Matrícula: {student.matricula}</p>

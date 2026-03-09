@@ -28,6 +28,10 @@ export const getColumns = ({ onEnroll }: { onEnroll: (student: Student) => void 
     header: 'Grupo',
   },
   {
+    accessorKey: 'comunidad',
+    header: 'Comunidad',
+  },
+  {
     accessorKey: 'fingerprintRegistered',
     header: 'Estado Huella',
     cell: ({ row }) => {

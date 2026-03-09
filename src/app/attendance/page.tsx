@@ -174,6 +174,7 @@ export default function AttendancePage() {
         return {
             'Alumno': student.nombre,
             'Grupo': student.grupo,
+            'Comunidad': student.comunidad,
             'Días Asistidos': daysAttended,
             'Ausencias': absences,
             '% Asistencia': attendancePercentage, // Kept as number for calculations

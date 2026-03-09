@@ -13,13 +13,23 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const studentSchema = z.object({
   nombre: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
   matricula: z.string().min(1, { message: 'La matrícula es obligatoria.' }),
   telefono_tutor: z.string().min(10, { message: 'El teléfono debe tener al menos 10 caracteres.' }),
   grupo: z.string().min(3, { message: 'Por favor ingresa un grupo.' }),
+  comunidad: z.string({ required_error: 'Por favor selecciona una comunidad.' }).min(1, { message: 'Por favor selecciona una comunidad.' }),
 });
+
+const comunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 type StudentFormValues = z.infer<typeof studentSchema>;
 
@@ -36,6 +46,7 @@ export function StudentForm({ onSubmit, onClose }: StudentFormProps) {
         matricula: '',
         telefono_tutor: '',
         grupo: '',
+        comunidad: '',
     },
   });
 
@@ -95,6 +106,28 @@ export function StudentForm({ onSubmit, onClose }: StudentFormProps) {
               <FormControl>
                 <Input placeholder="Ej. 101" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="comunidad"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Comunidad</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona una comunidad" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {comunidades.map(comunidad => (
+                    <SelectItem key={comunidad} value={comunidad}>{comunidad}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

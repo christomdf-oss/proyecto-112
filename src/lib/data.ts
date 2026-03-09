@@ -4,6 +4,7 @@ import type { Student, Attendance, NotificationLog } from './types';
 const firstNames = ['Mateo', 'Sofía', 'Santiago', 'Valentina', 'Sebastián', 'Isabella', 'Leonardo', 'Camila', 'Emiliano', 'Valeria', 'Daniel', 'Mariana', 'Javier', 'Gabriela', 'Diego', 'Luciana', 'Nicolás', 'Regina', 'Matías', 'Ximena'];
 const lastNames = ['García', 'Rodríguez', 'González', 'Hernández', 'López', 'Martínez', 'Pérez', 'Sánchez', 'Ramírez', 'Flores', 'Gomez', 'Diaz', 'Vargas', 'Rojas', 'Mendoza', 'Castillo'];
 const groups = ['101', '102', '103', '104', '201', '202', '203', '301', '302', '303'];
+const comunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 
 const students: Student[] = Array.from({ length: 280 }, (_, i) => {
@@ -11,6 +12,7 @@ const students: Student[] = Array.from({ length: 280 }, (_, i) => {
   const lastName1 = lastNames[Math.floor(Math.random() * lastNames.length)];
   const lastName2 = lastNames[Math.floor(Math.random() * lastNames.length)];
   const grupo = groups[Math.floor(Math.random() * groups.length)];
+  const comunidad = comunidades[Math.floor(Math.random() * comunidades.length)];
   const year = new Date().getFullYear().toString().slice(-2);
   // Ensure unique matricula
   const randomDigits = String(1000 + i).padStart(4, '0');
@@ -20,6 +22,7 @@ const students: Student[] = Array.from({ length: 280 }, (_, i) => {
     nombre: `${firstName} ${lastName1} ${lastName2}`,
     telefono_tutor: `+1-555-${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`,
     grupo,
+    comunidad,
     fingerprintRegistered: Math.random() > 0.1, // 90% have fingerprints
   };
 });

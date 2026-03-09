@@ -109,6 +109,7 @@ export function StudentReportCard({ student, attendance, onBack }: StudentReport
             const summaryJson = [
                 { Key: 'Alumno', Value: student.nombre },
                 { Key: 'Grupo', Value: student.grupo },
+                { Key: 'Comunidad', Value: student.comunidad },
                 { Key: 'Mes del Reporte', Value: format(monthDate, 'MMMM yyyy', { locale: es }) },
                 { Key: 'Días Hábiles en el Mes', Value: totalSchoolDays },
                 { Key: 'Días Asistidos', Value: daysAttended },
@@ -166,7 +167,7 @@ export function StudentReportCard({ student, attendance, onBack }: StudentReport
 
     return (
         <div className="container mx-auto py-2">
-            <PageHeader title={`Reporte de ${student.nombre}`} description={`Grupo: ${student.grupo} | Matrícula: ${student.matricula}`}>
+            <PageHeader title={`Reporte de ${student.nombre}`} description={`Grupo: ${student.grupo} | Matrícula: ${student.matricula} | Comunidad: ${student.comunidad}`}>
                 <div className="flex gap-2 items-center">
                     <Button onClick={handleExport}>
                         <Download className="mr-2 h-4 w-4" />

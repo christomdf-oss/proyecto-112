@@ -51,7 +51,7 @@ export default function DailyAbsenceList({
                       {student.nombre}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Grupo {student.grupo}
+                      Grupo {student.grupo} - {student.comunidad}
                     </p>
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground gap-2 pt-1">
