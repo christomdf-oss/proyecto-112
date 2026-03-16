@@ -26,10 +26,38 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 const manualEntrySchema = z.object({
+  type: z.enum(['entrada![CDATA['use client';
+import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import type { Student, Attendance } from '@/lib/types';
+import { PageHeader } from '@/components/page-header';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+
+const manualEntrySchema = z.object({
   type: z.enum(['entrada', 'salida', 'justificacion', 'permiso'], { required_error: 'Debes seleccionar un tipo.' }),
   date: z.date({ required_error: 'Debes seleccionar una fecha.' }),
   time: z.string().optional(),
-  reason: z.string().min(5, { message: 'El motivo debe tener al menos 5 caracteres.' }).max(200, { message: 'El motivo no puede exceder los 200 caracteres.'}),
+  reason: z.string().max(200, { message: 'El motivo no puede exceder los 200 caracteres.'}).optional(),
 }).refine(data => {
     if (data.type === 'justificacion') return true; // time is not required
     return !!data.time && /^([01]\d|2[0-3]):([0-5]\d)$/.test(data.time);
@@ -42,7 +70,7 @@ type ManualEntryFormValues = z.infer<typeof manualEntrySchema>;
 
 interface ManualEntryFormProps {
     student: Student;
-    onSubmit: (data: { type: Attendance['type'], timestamp: Date, reason: string }) => void;
+    onSubmit: (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => void;
     onBack: () => void;
 }
 
@@ -191,10 +219,10 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                 name="reason"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Motivo o Justificación</FormLabel>
+                                        <FormLabel>Motivo o Justificación (Opcional)</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Ej. Llegó tarde por cita médica (presenta justificante)."
+                                                placeholder="Ej. Salió a comprar material a la papelería."
                                                 {...field}
                                             />
                                         </FormControl>

@@ -89,7 +89,7 @@ export default function ManualEntryPage() {
     setFilters({ name: '', matricula: '' });
   }
 
-  const handleManualEntrySubmit = (data: { type: Attendance['type'], timestamp: Date, reason: string }) => {
+  const handleManualEntrySubmit = (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
     if (!selectedStudent) return;
 
     const newAttendanceRecord: Attendance = {
@@ -142,7 +142,7 @@ export default function ManualEntryPage() {
        <Card className="mb-6">
         <CardHeader>
             <CardTitle>Búsqueda Específica de Alumno</CardTitle>
-            <CardDescription>Usa esta sección si necesitas añadir un registro para un alumno que no está en la lista de ausentes (ej. una salida manual).</CardDescription>
+            <CardDescription>Usa esta sección si necesitas añadir un registro para un alumno que no está en la lista de ausentes (ej. una salida manual o un permiso).</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
@@ -273,10 +273,12 @@ export default function ManualEntryPage() {
                                               {item.type !== 'justificacion' && ` @ ${format(item.timestamp, 'p', { locale: es })}`}
                                             </Badge>
                                         </div>
-                                        <div className="flex items-start text-sm text-muted-foreground gap-2 pt-1">
-                                            <FileText className="h-4 w-4 mt-0.5 shrink-0" />
-                                            <span>{item.reason}</span>
-                                        </div>
+                                        {item.reason && (
+                                            <div className="flex items-start text-sm text-muted-foreground gap-2 pt-1">
+                                                <FileText className="h-4 w-4 mt-0.5 shrink-0" />
+                                                <span>{item.reason}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                               );

@@ -76,10 +76,12 @@ export default function JustifiedList({
                         {item.type !== 'justificacion' && ` @ ${format(item.timestamp, 'p', { locale: es })}`}
                       </Badge>
                     </div>
-                    <div className="flex items-start text-sm text-muted-foreground gap-2 pt-1">
-                      <FileText className="h-4 w-4 mt-0.5 shrink-0" />
-                      <span>{item.reason}</span>
-                    </div>
+                    {item.reason && (
+                        <div className="flex items-start text-sm text-muted-foreground gap-2 pt-1">
+                          <FileText className="h-4 w-4 mt-0.5 shrink-0" />
+                          <span>{item.reason}</span>
+                        </div>
+                    )}
                   </div>
                 </div>
               );
