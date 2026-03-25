@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Student, Attendance } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
 import {
@@ -83,6 +83,9 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
             <Card>
                 <CardHeader>
                     <CardTitle>Añadir Registro Manual</CardTitle>
+                    <CardDescription>
+                        Usa esta sección para añadir un registro. El motivo es opcional. Para permisos, búscalos aquí si ya han checado entrada.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -163,6 +166,9 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                                         onSelect={field.onChange}
                                                         disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
                                                         initialFocus
+                                                        formatters={{
+                                                            formatWeekdayName: (day) => format(day, 'EEEEE', { locale: es })
+                                                        }}
                                                     />
                                                 </PopoverContent>
                                             </Popover>
