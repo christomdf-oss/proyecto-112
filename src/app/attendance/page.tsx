@@ -95,20 +95,65 @@ export default function AttendancePage() {
     return new Set(attendanceData.map((a) => a.timestamp.toDateString()));
   }, [attendanceData]);
 
-  const handleExport = async (exportType: 'day' | 'month') => {
+  const handleExport = async (exportType: 'day' | 'month' | 'absent_day') => {
     const XLSX = await import('xlsx');
     const studentsById = new Map(allStudents.map((s) => [s.matricula, s]));
     let dateForFilename: string;
 
-    if (exportType === 'day') {
+    if (exportType === 'absent_day') {
+      const dataToExport = absentStudents;
+      dateForFilename = format(selectedDate, 'yyyy-MM-dd');
+
+      if (dataToExport.length === 0) {
+        toast({
+          title: 'No hay ausentes',
+          description: 'Todos los alumnos registraron asistencia en el día seleccionado.',
+        });
+        return;
+      }
+
+      const groupedByGrupo = dataToExport.reduce((acc, student) => {
+        const group = student.grupo;
+        if (!acc[group]) {
+          acc[group] = [];
+        }
+        acc[group].push(student);
+        return acc;
+      }, {} as Record<string, typeof dataToExport>);
+
+      const wb = XLSX.utils.book_new();
+      
+      const summaryJson = [
+        { 'A': 'Fecha del Reporte', 'B': format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: es }) },
+        { 'A': 'Total de Alumnos Ausentes', 'B': dataToExport.length }
+      ];
+
+      const summaryWs = XLSX.utils.json_to_sheet(summaryJson, { skipHeader: true });
+      XLSX.utils.book_append_sheet(wb, summaryWs, 'Resumen');
+
+
+      Object.keys(groupedByGrupo).sort().forEach(group => {
+        const groupData = groupedByGrupo[group];
+        const json_data = groupData.map(student => ({
+          'Alumno': student.nombre,
+          'Matrícula': student.matricula,
+          'Comunidad': student.comunidad,
+          'Teléfono del Tutor': student.telefono_tutor,
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(json_data);
+        XLSX.utils.book_append_sheet(wb, ws, `Grupo ${group}`);
+      });
+
+      XLSX.writeFile(wb, `reporte_ausencias_${dateForFilename}.xlsx`);
+    } else if (exportType === 'day') {
       const dataToExport = processedAttendance;
       dateForFilename = format(selectedDate, 'yyyy-MM-dd');
 
       if (dataToExport.length === 0) {
         toast({
-          variant: 'destructive',
           title: 'No hay datos para exportar',
-          description: 'No se encontraron registros para el día seleccionado.',
+          description: 'No se encontraron registros de asistencia para el día seleccionado.',
         });
         return;
       }
@@ -306,10 +351,13 @@ export default function AttendancePage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
                 <DropdownMenuItem onClick={() => handleExport('day')}>
-                    Exportar Día
+                    Exportar Asistencia del Día
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => handleExport('absent_day')}>
+                    Exportar Ausentes del Día
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExport('month')}>
-                    Exportar Mes
+                    Exportar Reporte Mensual
                 </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
