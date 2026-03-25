@@ -84,7 +84,7 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                 <CardHeader>
                     <CardTitle>Añadir Registro Manual</CardTitle>
                     <CardDescription>
-                        Usa esta sección para añadir un registro. El motivo es opcional. Para permisos, búscalos aquí si ya han checado entrada.
+                        Usa esta sección si necesitas añadir un registro para un alumno que no está en la lista de ausentes (ej. una salida manual o un permiso).
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -167,7 +167,7 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                                         disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
                                                         initialFocus
                                                         formatters={{
-                                                            formatWeekdayName: (day) => format(day, 'EEEEE', { locale: es })
+                                                            formatWeekdayName: (day) => format(day, 'EEEEEE', { locale: es })
                                                         }}
                                                     />
                                                 </PopoverContent>
