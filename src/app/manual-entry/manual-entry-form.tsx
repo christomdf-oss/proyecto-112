@@ -7,7 +7,7 @@ import type { Student, Attendance } from '@/lib/types';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -17,10 +17,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, addDays, subDays, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -139,14 +137,19 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
                                             <FormLabel>Fecha</FormLabel>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        type="button"
+                                                        onClick={() => field.onChange(subDays(field.value, 1))}
+                                                    >
+                                                        <ChevronLeft className="h-4 w-4" />
+                                                    </Button>
                                                     <FormControl>
-                                                        <Button
-                                                            variant={'outline'}
+                                                        <div
                                                             className={cn(
-                                                                'w-full pl-3 text-left font-normal',
-                                                                !field.value && 'text-muted-foreground'
+                                                                'flex h-10 w-full items-center justify-center rounded-md border border-input bg-transparent px-3 text-sm font-medium'
                                                             )}
                                                         >
                                                             {field.value ? (
@@ -154,21 +157,18 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                                             ) : (
                                                                 <span>Elige una fecha</span>
                                                             )}
-                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                        </Button>
+                                                        </div>
                                                     </FormControl>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <Calendar
-                                                        locale={es}
-                                                        mode="single"
-                                                        selected={field.value}
-                                                        onSelect={field.onChange}
-                                                        disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        type="button"
+                                                        onClick={() => field.onChange(addDays(field.value, 1))}
+                                                        disabled={isToday(field.value) || field.value > new Date()}
+                                                    >
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}
