@@ -166,9 +166,6 @@ export function ManualEntryForm({ student, onSubmit, onBack }: ManualEntryFormPr
                                                         onSelect={field.onChange}
                                                         disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
                                                         initialFocus
-                                                        formatters={{
-                                                            formatWeekdayName: (day) => format(day, 'EEEEE', { locale: es })
-                                                        }}
                                                     />
                                                 </PopoverContent>
                                             </Popover>
