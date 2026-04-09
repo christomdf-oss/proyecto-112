@@ -6,18 +6,33 @@ import { Users, LogIn, History, Bell } from 'lucide-react';
 import StatCard from '@/components/dashboard/stat-card';
 import AttendanceFeed from '@/components/dashboard/attendance-feed';
 import NotificationsPanel from '@/components/dashboard/notifications-panel';
-import { getStudents, getAttendance, getNotificationLogs } from '@/lib/data';
+import type { Student, Attendance, NotificationLog } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export default function DashboardPage() {
-  const students = React.useMemo(() => getStudents(), []);
-  const attendance = React.useMemo(() => getAttendance(), []);
-  const notificationLogs = React.useMemo(() => getNotificationLogs(), []);
+  const [students, setStudents] = React.useState<Student[]>([]);
+  const [attendance, setAttendance] = React.useState<Attendance[]>([]);
+  const [notificationLogs, setNotificationLogs] = React.useState<NotificationLog[]>([]);
+  const [isClient, setIsClient] = React.useState(false);
 
   const [presentToday, setPresentToday] = React.useState(0);
   const [eventsToday, setEventsToday] = React.useState(0);
   const [notificationsLast24h, setNotificationsLast24h] = React.useState(0);
 
   React.useEffect(() => {
+    // This effect runs only on the client, after the component has mounted.
+    import('@/lib/data').then(dataModule => {
+        setStudents(dataModule.getStudents());
+        setAttendance(dataModule.getAttendance());
+        setNotificationLogs(dataModule.getNotificationLogs());
+    });
+    setIsClient(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!isClient) return;
+
     const todayString = new Date().toDateString();
     
     const todaysAttendance = attendance.filter(a => a.timestamp.toDateString() === todayString);
@@ -35,7 +50,67 @@ export default function DashboardPage() {
     const recentNotifications = notificationLogs.filter(log => log.timestamp > twentyFourHoursAgo);
     setNotificationsLast24h(recentNotifications.length);
 
-  }, [attendance, notificationLogs]);
+  }, [attendance, notificationLogs, isClient]);
+
+  const StatCardSkeleton = () => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-4" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-3 w-full mt-2" />
+      </CardContent>
+    </Card>
+  )
+
+  if (!isClient) {
+     return (
+        <div className="flex flex-col gap-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+            </div>
+             <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Registro de Asistencia en Vivo</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="flex items-center gap-4">
+                                <Skeleton className="h-9 w-9 rounded-full" />
+                                <div className="grid gap-1.5 flex-1">
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-3 w-24" />
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Registros de Notificaciones de WhatsApp</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                         {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="flex items-center">
+                                <Skeleton className="h-5 w-5 rounded-full" />
+                                <div className="ml-4 space-y-1.5">
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-3 w-24" />
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+     )
+  }
 
   return (
     <div className="flex flex-col gap-6">
