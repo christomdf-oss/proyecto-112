@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { PlusCircle, X } from 'lucide-react';
 
 const studentSchema = z.object({
   nombre: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
@@ -29,16 +32,17 @@ const studentSchema = z.object({
   comunidad: z.string({ required_error: 'Por favor selecciona una comunidad.' }).min(1, { message: 'Por favor selecciona una comunidad.' }),
 });
 
-const comunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
-
 type StudentFormValues = z.infer<typeof studentSchema>;
 
 interface StudentFormProps {
   onSubmit: (data: StudentFormValues) => void;
   onClose: () => void;
+  comunidades: string[];
+  onAddComunidad: (comunidad: string) => boolean;
+  onRemoveComunidad: (comunidad: string) => void;
 }
 
-export function StudentForm({ onSubmit, onClose }: StudentFormProps) {
+export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, onRemoveComunidad }: StudentFormProps) {
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -49,6 +53,17 @@ export function StudentForm({ onSubmit, onClose }: StudentFormProps) {
         comunidad: '',
     },
   });
+
+  const [newComunidad, setNewComunidad] = React.useState('');
+
+  const handleAddNewComunidad = () => {
+    if (newComunidad.trim()) {
+      const success = onAddComunidad(newComunidad.trim());
+      if (success) {
+        setNewComunidad('');
+      }
+    }
+  };
 
   const handleSubmit = (data: StudentFormValues) => {
     onSubmit(data);
@@ -123,9 +138,61 @@ export function StudentForm({ onSubmit, onClose }: StudentFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {comunidades.map(comunidad => (
-                    <SelectItem key={comunidad} value={comunidad}>{comunidad}</SelectItem>
-                  ))}
+                  <div className="p-2">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Añadir nueva comunidad"
+                        value={newComunidad}
+                        onChange={(e) => setNewComunidad(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddNewComunidad();
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={handleAddNewComunidad}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <Separator className="my-1" />
+                  <div className="max-h-[200px] overflow-y-auto">
+                    {comunidades.map((comunidad) => (
+                      <SelectItem
+                        key={comunidad}
+                        value={comunidad}
+                        className="group/item relative pr-10"
+                      >
+                        {comunidad}
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full opacity-0 group-hover/item:opacity-100"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onRemoveComunidad(comunidad);
+                            }}
+                        >
+                            <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </SelectItem>
+                    ))}
+                    {comunidades.length === 0 && (
+                        <div className="text-center text-sm text-muted-foreground p-2">
+                            Añade una comunidad para empezar.
+                        </div>
+                    )}
+                  </div>
                 </SelectContent>
               </Select>
               <FormMessage />

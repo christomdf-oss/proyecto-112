@@ -23,11 +23,13 @@ import { EnrollFingerprintDialog } from './enroll-fingerprint-dialog';
 // Infer the form values type from the StudentForm component
 type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
 
+const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 export default function StudentsPage() {
   const [students, setStudents] = React.useState(() => getStudents());
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
   const [enrollmentStudent, setEnrollmentStudent] = React.useState<Student | null>(null);
+  const [comunidades, setComunidades] = React.useState(initialComunidades);
   const { toast } = useToast();
 
   const handleAddStudent = (data: StudentFormValues) => {
@@ -41,6 +43,35 @@ export default function StudentsPage() {
         title: "Alumno Registrado",
         description: `${data.nombre} ha sido agregado exitosamente.`,
     })
+  };
+  
+  const handleAddComunidad = (newComunidad: string) => {
+    const upperCaseComunidad = newComunidad.toUpperCase();
+    if (upperCaseComunidad && !comunidades.includes(upperCaseComunidad)) {
+      setComunidades(prev => [...prev, upperCaseComunidad].sort());
+      toast({
+        title: "Comunidad Agregada",
+        description: `${upperCaseComunidad} ha sido agregada a la lista.`,
+      });
+      return true;
+    }
+    if (comunidades.includes(upperCaseComunidad)) {
+        toast({
+            variant: "destructive",
+            title: "Comunidad ya existe",
+            description: `${upperCaseComunidad} ya está en la lista.`,
+        });
+    }
+    return false;
+  };
+
+  const handleRemoveComunidad = (comunidadToRemove: string) => {
+    setComunidades(prev => prev.filter(c => c !== comunidadToRemove));
+    toast({
+        variant: "destructive",
+        title: "Comunidad Eliminada",
+        description: `${comunidadToRemove} ha sido eliminada de la lista.`,
+    });
   };
   
   const handleOpenEnrollDialog = (student: Student) => {
@@ -82,6 +113,9 @@ export default function StudentsPage() {
                 <StudentForm 
                     onSubmit={handleAddStudent}
                     onClose={() => setIsAddStudentOpen(false)}
+                    comunidades={comunidades}
+                    onAddComunidad={handleAddComunidad}
+                    onRemoveComunidad={handleRemoveComunidad}
                 />
             </DialogContent>
         </Dialog>
