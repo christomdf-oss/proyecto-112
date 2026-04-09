@@ -21,8 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { PlusCircle, X } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { PlusCircle, Trash2, ChevronsUpDown } from 'lucide-react';
 
 const studentSchema = z.object({
   nombre: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
@@ -55,6 +59,7 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
   });
 
   const [newComunidad, setNewComunidad] = React.useState('');
+  const [isManaging, setIsManaging] = React.useState(false);
 
   const handleAddNewComunidad = () => {
     if (newComunidad.trim()) {
@@ -125,6 +130,7 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="comunidad"
@@ -138,10 +144,37 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <div className="p-2">
-                    <div className="flex items-center gap-2">
+                  {comunidades.length > 0 ? (
+                    comunidades.map((comunidad) => (
+                      <SelectItem key={comunidad} value={comunidad}>
+                        {comunidad}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                        Añade una comunidad.
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <Collapsible open={isManaging} onOpenChange={setIsManaging}>
+            <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start px-2 -mx-2 text-sm text-muted-foreground">
+                    <ChevronsUpDown className="h-4 w-4 mr-2" />
+                    Gestionar lista de comunidades
+                </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <div className="mt-2 space-y-4 rounded-md border p-4">
+                    <p className="text-sm font-medium">Añadir Nueva Comunidad</p>
+                     <div className="flex items-center gap-2">
                       <Input
-                        placeholder="Añadir nueva comunidad"
+                        placeholder="Nombre de la comunidad"
                         value={newComunidad}
                         onChange={(e) => setNewComunidad(e.target.value)}
                         onKeyDown={(e) => {
@@ -161,43 +194,35 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                  <Separator className="my-1" />
-                  <div className="max-h-[200px] overflow-y-auto">
-                    {comunidades.map((comunidad) => (
-                      <SelectItem
-                        key={comunidad}
-                        value={comunidad}
-                        className="group/item relative pr-10"
-                      >
-                        {comunidad}
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full opacity-0 group-hover/item:opacity-100"
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                onRemoveComunidad(comunidad);
-                            }}
-                        >
-                            <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                        </Button>
-                      </SelectItem>
-                    ))}
-                    {comunidades.length === 0 && (
-                        <div className="text-center text-sm text-muted-foreground p-2">
-                            Añade una comunidad para empezar.
-                        </div>
-                    )}
-                  </div>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
+                    <p className="text-sm font-medium pt-2">Comunidades Existentes</p>
+                    <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2">
+                        {comunidades.length > 0 ? (
+                            comunidades.map(c => (
+                                <div key={c} className="flex items-center justify-between gap-2 p-2 rounded-md bg-muted/50">
+                                    <span className="text-sm">{c}</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => onRemoveComunidad(c)}
+                                    >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            ))
+                        ) : (
+                             <div className="text-center text-sm text-muted-foreground py-4">
+                                Añade una comunidad para empezar.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </CollapsibleContent>
+        </Collapsible>
+
+
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit">Guardar Alumno</Button>
