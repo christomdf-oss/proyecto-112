@@ -5,14 +5,14 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { getStudents, getAttendance } from '@/lib/data';
 import type { Student, Attendance } from '@/lib/types';
 import { StudentReportCard } from './student-report-card';
 import { Search } from 'lucide-react';
+import { useCollection } from '@/firebase';
 
 export default function ReportsPage() {
-  const allStudents = React.useMemo(() => getStudents(), []);
-  const allAttendance = React.useMemo(() => getAttendance(), []);
+  const { data: allStudents } = useCollection<Student>('alumnos');
+  const { data: allAttendance } = useCollection<Attendance>('asistencias');
 
   const [filters, setFilters] = React.useState({ name: '', group: '', matricula: '', comunidad: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
@@ -27,7 +27,8 @@ export default function ReportsPage() {
         return;
     }
 
-    let filtered = allStudents;
+    const currentStudents = allStudents ?? [];
+    let filtered = currentStudents;
     if (filters.matricula) {
       filtered = filtered.filter(s => s.matricula.toLowerCase().includes(filters.matricula.toLowerCase()));
     }
@@ -55,7 +56,7 @@ export default function ReportsPage() {
     return (
         <StudentReportCard 
             student={selectedStudent} 
-            attendance={allAttendance} 
+            attendance={allAttendance ?? []} 
             onBack={() => setSelectedStudent(null)} 
         />
     )

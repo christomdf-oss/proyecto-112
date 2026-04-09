@@ -47,7 +47,16 @@ export function useCollection<T>(
       options?.snapshotListenOptions,
       (snapshot: QuerySnapshot<DocumentData>) => {
         const docs = snapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as unknown as T)
+          (doc) => {
+            const data = doc.data();
+            // Convert Firestore Timestamps to JS Dates
+            for (const key in data) {
+              if (data[key] && typeof data[key].toDate === 'function') {
+                data[key] = data[key].toDate();
+              }
+            }
+            return { id: doc.id, ...data } as unknown as T;
+          }
         );
         setData(docs);
         setLoading(false);

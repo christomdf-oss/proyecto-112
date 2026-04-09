@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { getAttendance, getStudents } from '@/lib/data';
 import { PageHeader } from '@/components/page-header';
 import AttendanceCalendar from './attendance-calendar';
 import DailyAttendanceList from './daily-attendance-list';
@@ -21,15 +20,17 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { useCollection } from '@/firebase';
 import type * as XLSX from 'xlsx';
 
 export default function AttendancePage() {
-  const attendanceData = React.useMemo(() => getAttendance(), []);
-  const allStudents = React.useMemo(() => getStudents(), []);
+  const { data: attendanceData } = useCollection<Attendance>('asistencias');
+  const { data: allStudents } = useCollection<Student>('alumnos');
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const { toast } = useToast();
 
   const processedAttendance = React.useMemo(() => {
+    if (!attendanceData || !allStudents) return [];
     // This logic correctly includes manual 'entrada' in the present list.
     const attendanceForSelectedDay = attendanceData.filter((a) =>
       isSameDay(a.timestamp, selectedDate)
@@ -79,6 +80,7 @@ export default function AttendancePage() {
   }, [attendanceData, allStudents, selectedDate]);
 
   const absentStudents = React.useMemo(() => {
+    if (!allStudents) return [];
     // An absent student is one who does not have an 'entrada' record.
     const presentStudentIds = new Set(processedAttendance.filter(pa => pa.entrada).map(a => a.studentId));
     return allStudents.filter(student => !presentStudentIds.has(student.matricula)).sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -86,16 +88,27 @@ export default function AttendancePage() {
 
   // NEW: Get justified records for the selected date
   const justifiedRecords = React.useMemo(() => {
+    if (!attendanceData) return [];
     return attendanceData.filter(
       (a) => isSameDay(a.timestamp, selectedDate) && a.isManual
     ).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [attendanceData, selectedDate]);
 
   const daysWithAttendance = React.useMemo(() => {
+    if (!attendanceData) return new Set();
     return new Set(attendanceData.map((a) => a.timestamp.toDateString()));
   }, [attendanceData]);
 
   const handleExport = async (exportType: 'day' | 'month' | 'absent_day') => {
+    if (!allStudents || !attendanceData) {
+       toast({
+          variant: 'destructive',
+          title: 'Datos no cargados',
+          description: `Espera a que los datos se carguen antes de exportar.`,
+        });
+        return;
+    }
+
     const XLSX = await import('xlsx');
     const studentsById = new Map(allStudents.map((s) => [s.matricula, s]));
     let dateForFilename: string;

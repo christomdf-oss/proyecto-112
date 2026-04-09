@@ -46,7 +46,14 @@ export function useDoc<T>(
       options?.snapshotListenOptions,
       (snapshot: DocumentSnapshot<DocumentData>) => {
         if (snapshot.exists()) {
-          const docData = { id: snapshot.id, ...snapshot.data() } as unknown as T;
+          const data = snapshot.data();
+          // Convert Firestore Timestamps to JS Dates
+          for (const key in data) {
+            if (data[key] && typeof data[key].toDate === 'function') {
+              data[key] = data[key].toDate();
+            }
+          }
+          const docData = { id: snapshot.id, ...data } as unknown as T;
           setData(docData);
         } else {
           setData(undefined);

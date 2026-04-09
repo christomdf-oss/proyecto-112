@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { getStudents, getAttendance } from '@/lib/data';
 import type { Student, Attendance } from '@/lib/types';
 import { Search, PlusCircle, FileText, Phone } from 'lucide-react';
 import { ManualEntryForm } from './manual-entry-form';
@@ -15,6 +14,8 @@ import { isSameDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useCollection, useFirestore } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 
 type BadgeVariant = 'success' | 'destructive' | 'secondary' | 'outline' | 'default';
@@ -35,9 +36,9 @@ const getBadgeProps = (type: Attendance['type']): { variant: BadgeVariant, text:
 }
 
 export default function ManualEntryPage() {
-  // Use a state for students and attendance to reflect updates
-  const [allStudents, setAllStudents] = React.useState(() => getStudents());
-  const [attendanceData, setAttendanceData] = React.useState(() => getAttendance());
+  const { data: allStudents } = useCollection<Student>('alumnos');
+  const { data: attendanceData } = useCollection<Attendance>('asistencias');
+  const firestore = useFirestore();
 
   const [filters, setFilters] = React.useState({ name: '', matricula: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
@@ -49,6 +50,7 @@ export default function ManualEntryPage() {
 
   // Logic for Ausentes Hoy
   const absentToday = React.useMemo(() => {
+    if (!attendanceData || !allStudents) return [];
     const todaysAttendance = attendanceData.filter((a) =>
       isSameDay(a.timestamp, today) && a.type === 'entrada'
     );
@@ -58,6 +60,7 @@ export default function ManualEntryPage() {
 
   // Logic for Registros Manuales del Día
   const manualEntriesToday = React.useMemo(() => {
+    if (!attendanceData) return [];
      return attendanceData.filter(
       (a) => isSameDay(a.timestamp, today) && a.isManual
     ).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -72,7 +75,8 @@ export default function ManualEntryPage() {
         return;
     }
 
-    let filtered = allStudents;
+    const currentStudents = allStudents ?? [];
+    let filtered = currentStudents;
     if (filters.matricula) {
       filtered = filtered.filter(s => s.matricula.toLowerCase().includes(filters.matricula.toLowerCase()));
     }
@@ -89,11 +93,10 @@ export default function ManualEntryPage() {
     setFilters({ name: '', matricula: '' });
   }
 
-  const handleManualEntrySubmit = (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
+  const handleManualEntrySubmit = async (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
     if (!selectedStudent) return;
 
-    const newAttendanceRecord: Attendance = {
-      id: `att_manual_${Date.now()}`,
+    const newAttendanceRecord: Omit<Attendance, 'id'> = {
       studentId: selectedStudent.matricula,
       studentName: selectedStudent.nombre,
       timestamp: data.timestamp,
@@ -102,22 +105,26 @@ export default function ManualEntryPage() {
       reason: data.reason,
     };
     
-    // Update state to trigger re-render of lists
-    const newAttendanceData = [newAttendanceRecord, ...attendanceData];
-    newAttendanceData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    setAttendanceData(newAttendanceData);
-    
-    // Also update the mock data source for session persistence
-    getAttendance().unshift(newAttendanceRecord);
-    getAttendance().sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    try {
+      const attendanceCollection = collection(firestore, 'asistencias');
+      await addDoc(attendanceCollection, newAttendanceRecord);
 
-    toast({
-        title: "Registro Manual Exitoso",
-        description: `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`,
-    });
+      toast({
+          title: "Registro Manual Exitoso",
+          description: `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`,
+      });
 
-    setSelectedStudent(null); // Go back to the main view
-    handleClearSearch();
+      setSelectedStudent(null); // Go back to the main view
+      handleClearSearch();
+
+    } catch (error) {
+      console.error("Error adding manual entry:", error);
+      toast({
+        variant: "destructive",
+        title: "Error al Guardar",
+        description: "No se pudo agregar el registro manual. Intenta de nuevo.",
+      });
+    }
   };
 
   if (selectedStudent) {

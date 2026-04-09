@@ -8,11 +8,13 @@ import AttendanceFeed from '@/components/dashboard/attendance-feed';
 import NotificationsPanel from '@/components/dashboard/notifications-panel';
 import type { Student, Attendance, NotificationLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCollection } from '@/firebase';
+import { getNotificationLogs } from '@/lib/data';
 
 
 export default function DashboardPage() {
-  const [students, setStudents] = React.useState<Student[]>([]);
-  const [attendance, setAttendance] = React.useState<Attendance[]>([]);
+  const { data: students, loading: studentsLoading } = useCollection<Student>('alumnos');
+  const { data: attendance, loading: attendanceLoading } = useCollection<Attendance>('asistencias');
   const [notificationLogs, setNotificationLogs] = React.useState<NotificationLog[]>([]);
   const [isClient, setIsClient] = React.useState(false);
 
@@ -22,16 +24,13 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     // This effect runs only on the client, after the component has mounted.
-    import('@/lib/data').then(dataModule => {
-        setStudents(dataModule.getStudents());
-        setAttendance(dataModule.getAttendance());
-        setNotificationLogs(dataModule.getNotificationLogs());
-    });
+    // For now, notification logs are still coming from mock data.
+    setNotificationLogs(getNotificationLogs());
     setIsClient(true);
   }, []);
 
   React.useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !attendance || !notificationLogs) return;
 
     const todayString = new Date().toDateString();
     
@@ -51,6 +50,8 @@ export default function DashboardPage() {
     setNotificationsLast24h(recentNotifications.length);
 
   }, [attendance, notificationLogs, isClient]);
+  
+  const loading = studentsLoading || attendanceLoading || !isClient;
 
   const StatCardSkeleton = () => (
     <Card>
@@ -65,7 +66,7 @@ export default function DashboardPage() {
     </Card>
   )
 
-  if (!isClient) {
+  if (loading) {
      return (
         <div className="flex flex-col gap-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -117,7 +118,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total de Alumnos"
-          value={students.length}
+          value={students?.length ?? 0}
           icon={Users}
           description="Alumnos registrados en total"
         />
@@ -147,7 +148,7 @@ export default function DashboardPage() {
             <CardTitle>Registro de Asistencia en Vivo</CardTitle>
           </CardHeader>
           <CardContent>
-            <AttendanceFeed attendance={attendance.slice(0, 10)} />
+            <AttendanceFeed attendance={(attendance ?? []).slice(0, 10)} />
           </CardContent>
         </Card>
         <Card>

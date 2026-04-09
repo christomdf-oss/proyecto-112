@@ -13,40 +13,49 @@ import {
 } from '@/components/ui/dialog';
 import { DataTable } from './data-table';
 import { getColumns } from './columns';
-import { getStudents } from '@/lib/data';
 import { PageHeader } from '@/components/page-header';
 import { StudentForm } from './student-form';
 import type { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { EnrollFingerprintDialog } from './enroll-fingerprint-dialog';
+import { useCollection, useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
-// Infer the form values type from the StudentForm component
 type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
 
 const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 export default function StudentsPage() {
-  const [students, setStudents] = React.useState<Student[]>([]);
+  const { data: students } = useCollection<Student>('alumnos');
+  const firestore = useFirestore();
+
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
   const [enrollmentStudent, setEnrollmentStudent] = React.useState<Student | null>(null);
   const [comunidades, setComunidades] = React.useState(initialComunidades);
   const { toast } = useToast();
-  
-  React.useEffect(() => {
-    setStudents(getStudents());
-  }, []);
 
-  const handleAddStudent = (data: StudentFormValues) => {
+  const handleAddStudent = async (data: StudentFormValues) => {
     const newStudent: Student = {
         ...data,
         fingerprintRegistered: false,
     };
-    setStudents((prev) => [newStudent, ...prev]);
-    setIsAddStudentOpen(false);
-    toast({
-        title: "Alumno Registrado",
-        description: `${data.nombre} ha sido agregado exitosamente.`,
-    })
+
+    try {
+      const studentRef = doc(firestore, 'alumnos', newStudent.matricula);
+      await setDoc(studentRef, newStudent);
+      setIsAddStudentOpen(false);
+      toast({
+          title: "Alumno Registrado",
+          description: `${data.nombre} ha sido agregado exitosamente a la base de datos.`,
+      })
+    } catch (error) {
+      console.error("Error adding student: ", error);
+      toast({
+          variant: "destructive",
+          title: "Error al registrar",
+          description: "No se pudo guardar el alumno. Inténtalo de nuevo.",
+      })
+    }
   };
   
   const handleAddComunidad = (newComunidad: string) => {
@@ -86,13 +95,18 @@ export default function StudentsPage() {
     setEnrollmentStudent(null);
   };
 
-  const handleEnrollSuccess = (matricula: string) => {
-    setStudents(prev => 
-      prev.map(s => 
-        s.matricula === matricula ? { ...s, fingerprintRegistered: true } : s
-      )
-    );
-    // The dialog will be closed after success message is shown
+  const handleEnrollSuccess = async (matricula: string) => {
+    try {
+      const studentRef = doc(firestore, 'alumnos', matricula);
+      await setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
+    } catch (error) {
+      console.error("Error updating fingerprint status: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error al actualizar",
+        description: "No se pudo actualizar el estado de la huella.",
+      });
+    }
   };
   
   const studentColumns = getColumns({ onEnroll: handleOpenEnrollDialog });
@@ -126,7 +140,7 @@ export default function StudentsPage() {
       </PageHeader>
       <Card>
         <CardContent className="pt-6">
-          <DataTable columns={studentColumns} data={students} />
+          <DataTable columns={studentColumns} data={students ?? []} />
         </CardContent>
       </Card>
       
