@@ -26,11 +26,15 @@ type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (
 const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 export default function StudentsPage() {
-  const [students, setStudents] = React.useState(() => getStudents());
+  const [students, setStudents] = React.useState<Student[]>([]);
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
   const [enrollmentStudent, setEnrollmentStudent] = React.useState<Student | null>(null);
   const [comunidades, setComunidades] = React.useState(initialComunidades);
   const { toast } = useToast();
+  
+  React.useEffect(() => {
+    setStudents(getStudents());
+  }, []);
 
   const handleAddStudent = (data: StudentFormValues) => {
     const newStudent: Student = {
