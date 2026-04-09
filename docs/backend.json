@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "student": {
+      "title": "Student",
+      "description": "Represents a student in the school.",
+      "type": "object",
+      "properties": {
+        "matricula": {
+          "type": "string",
+          "description": "The student's unique ID."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "The full name of the student."
+        },
+        "telefono_tutor": {
+          "type": "string",
+          "description": "The guardian's phone number."
+        },
+        "grupo": {
+          "type": "string",
+          "description": "The student's group or class."
+        },
+        "comunidad": {
+          "type": "string",
+          "description": "The student's community of origin."
+        },
+        "fingerprintRegistered": {
+          "type": "boolean",
+          "description": "Whether the student's fingerprint is registered."
+        }
+      },
+      "required": ["matricula", "nombre", "telefono_tutor", "grupo", "comunidad"]
+    },
+    "attendance": {
+      "title": "Attendance",
+      "description": "Represents an attendance record for a student.",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "The ID of the student."
+        },
+        "studentName": {
+          "type": "string",
+          "description": "The name of the student (denormalized)."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the attendance event."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["entrada", "salida", "justificacion", "permiso"],
+          "description": "The type of attendance event."
+        },
+        "isManual": {
+          "type": "boolean",
+          "description": "True if the record was added manually."
+        },
+        "reason": {
+          "type": "string",
+          "description": "The reason for a manual entry."
+        }
+      },
+      "required": ["studentId", "studentName", "timestamp", "type"]
+    }
+  },
+  "auth": {
+    "providers": []
+  },
+  "firestore": {
+    "/alumnos/{studentId}": {
+      "schema": {
+        "$ref": "#/entities/student"
+      },
+      "description": "Stores individual student profiles."
+    },
+    "/asistencias/{attendanceId}": {
+      "schema": {
+        "$ref": "#/entities/attendance"
+      },
+      "description": "Stores all attendance records for all students."
+    }
+  }
+}
