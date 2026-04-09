@@ -20,7 +20,6 @@ import {
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Separator } from '../ui/separator';
-import Logo from '@/components/logo';
 
 const AppSidebar = () => {
   const pathname = usePathname();
@@ -40,8 +39,7 @@ const AppSidebar = () => {
       variant="sidebar"
     >
       <SidebarHeader className="h-16 flex items-center justify-center">
-        <Link href="/" className="flex items-center gap-3">
-          <Logo className="shrink-0" />
+        <Link href="/" className="flex items-center px-4">
           <div className="flex flex-col">
             <span className="font-bold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">
               COBACAM
