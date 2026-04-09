@@ -10,12 +10,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '../ui/skeleton';
 
 interface NotificationsPanelProps {
   logs: NotificationLog[];
 }
 
 const NotificationsPanel = ({ logs }: NotificationsPanelProps) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <div className="space-y-3">
       {logs.map((log) => (
@@ -43,9 +51,13 @@ const NotificationsPanel = ({ logs }: NotificationsPanelProps) => {
                 <LogOut className="h-3 w-3 text-muted-foreground" />
               )}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {formatDistanceToNow(log.timestamp, { addSuffix: true, locale: es })}
-            </p>
+            <div className="text-sm text-muted-foreground">
+              {isClient ? (
+                formatDistanceToNow(log.timestamp, { addSuffix: true, locale: es })
+              ) : (
+                <Skeleton className="h-4 w-24" />
+              )}
+            </div>
           </div>
           <div className="ml-auto text-sm text-muted-foreground capitalize">
             {log.eventType}
