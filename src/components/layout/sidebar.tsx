@@ -73,9 +73,15 @@ const AppSidebar = () => {
       <SidebarFooter className='h-16'>
         <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: 'Configuración', side: 'right' }}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/settings'}
+                  tooltip={{ children: 'Configuración', side: 'right' }}
+                >
+                  <Link href="/settings">
                     <Settings />
                     <span>Configuración</span>
+                  </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
