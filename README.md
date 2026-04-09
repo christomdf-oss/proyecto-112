@@ -53,3 +53,18 @@ Módulo diseñado para manejar todas las excepciones y situaciones especiales de
     - **Justificar Ausencia:** Para documentar una falta de día completo (no afecta el conteo de asistencia).
     - **Registrar Permiso:** Para salidas temporales que no deben contar como una salida oficial (ej. ir a la papelería).
 - **Registro de Motivo:** Todos los registros manuales requieren una justificación, asegurando que cada excepción quede documentada.
+
+---
+
+## Arquitectura y Conexión con Backend
+
+El sistema está diseñado con una arquitectura cliente-servidor desacoplada, utilizando Firebase como intermediario.
+
+*   **Aplicación Web (Next.js):** Es la interfaz de administración que estás utilizando. Se encarga de leer los datos de la base de datos para mostrar los reportes y el estado del plantel.
+*   **Base de Datos (Google Firestore):** Es la base de datos en la nube donde se almacenan todos los datos (alumnos, asistencias). Sirve como única fuente de verdad.
+*   **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en una Raspberry Pi conectada a un lector de huellas. Este script es responsable de:
+    1.  Leer la huella dactilar.
+    2.  Identificar al alumno en la base de datos.
+    3.  Registrar el evento de entrada o salida directamente en Firestore.
+
+Este diseño permite que la aplicación web y el dispositivo de captura operen de manera independiente, comunicándose solo a través de la base de datos.

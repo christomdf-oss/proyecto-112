@@ -25,6 +25,7 @@ Este informe está diseñado para servir como una guía de referencia tanto para
 ## Índice
 
 1.  [Introducción](#1-introducción)
+    *   [1.1. Arquitectura del Sistema](#11-arquitectura-del-sistema)
 2.  [Desarrollo: Descripción de Módulos](#2-desarrollo-descripción-de-módulos)
     *   [2.1. Panel de Control (Dashboard)](#21-panel-de-control-dashboard)
     *   [2.2. Gestión de Alumnos](#22-gestión-de-alumnos)
@@ -50,6 +51,18 @@ El objetivo principal de este proyecto es ofrecer una plataforma web centralizad
 *   **Mejorar la comunicación** con los tutores mediante el envío de notificaciones (funcionalidad subyacente).
 
 Este sistema está construido con tecnologías web modernas, asegurando una experiencia de usuario fluida, segura y escalable.
+
+### 1.1. Arquitectura del Sistema
+
+El sistema se basa en una arquitectura de tres componentes principales que trabajan en conjunto:
+
+1.  **Aplicación Web (Frontend):** Desarrollada en Next.js, esta es la interfaz principal para los administradores. Su función es visualizar datos, generar reportes y gestionar la información de los alumnos. No escribe datos directamente, solo los lee desde la base de datos.
+
+2.  **Base de Datos en la Nube (Google Firestore):** Actúa como el cerebro y la única fuente de verdad del sistema. Almacena de forma segura y centralizada las colecciones de `alumnos` y `asistencias`.
+
+3.  **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en un dispositivo físico (Raspberry Pi) en el plantel. Este script está conectado a un lector de huellas dactilares y es el único componente con permisos para escribir en la base de datos. Su responsabilidad es capturar la huella, identificar al alumno y registrar el evento de asistencia en Firestore.
+
+Esta arquitectura desacoplada garantiza que cada componente tenga una única responsabilidad, haciendo el sistema más robusto, seguro y escalable.
 
 ---
 
