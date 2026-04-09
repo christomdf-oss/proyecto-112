@@ -7,7 +7,7 @@ const groups = ['101', '102', '103', '104', '201', '202', '203', '301', '302', '
 const comunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 
-const students: Student[] = Array.from({ length: 280 }, (_, i) => {
+const students: Student[] = Array.from({ length: 5 }, (_, i) => {
   const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
   const lastName1 = lastNames[Math.floor(Math.random() * lastNames.length)];
   const lastName2 = lastNames[Math.floor(Math.random() * lastNames.length)];
