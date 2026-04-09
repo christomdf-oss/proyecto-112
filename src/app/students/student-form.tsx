@@ -179,7 +179,6 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                                 e.preventDefault();
-                                e.stopPropagation();
                                 onRemoveComunidad(comunidad);
                             }}
                         >
