@@ -50,16 +50,19 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    // Use matricula as a unique and stable row id
+    getRowId: (row) => (row as any).matricula,
     state: {
       sorting,
       columnFilters,
     },
   });
 
-  const SkeletonRow = () => (
+  // SkeletonRow now accepts column count to avoid depending on the columns prop directly
+  const SkeletonRow = ({ columnCount }: { columnCount: number }) => (
     <TableRow>
-      {columns.map((column) => (
-        <TableCell key={column.id}>
+      {Array.from({ length: columnCount }).map((_, index) => (
+        <TableCell key={`skeleton-cell-${index}`}>
           <Skeleton className="h-6 w-full" />
         </TableCell>
       ))}
@@ -108,17 +111,14 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-                <>
-                    <SkeletonRow />
-                    <SkeletonRow />
-                    <SkeletonRow />
-                    <SkeletonRow />
-                    <SkeletonRow />
-                </>
+              // Use a map to render skeletons with unique keys
+              Array.from({ length: 5 }).map((_, index) => (
+                <SkeletonRow key={`skeleton-row-${index}`} columnCount={columns.length} />
+              ))
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  key={row.id}
+                  key={row.id} // This now uses the unique matricula
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
