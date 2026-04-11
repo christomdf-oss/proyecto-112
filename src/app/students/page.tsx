@@ -54,6 +54,10 @@ export default function StudentsPage() {
         const querySnapshot = await getDocs(collection(firestore, "students"));
         const studentsData = querySnapshot.docs.map(doc => {
             const data = doc.data();
+            // Filter out incomplete documents
+            if (!data.matricula || !data.nombre) {
+                return null;
+            }
             return {
                 id: doc.id,
                 matricula: data.matricula,
@@ -63,11 +67,11 @@ export default function StudentsPage() {
                 comunidad: data.comunidad,
                 fingerprintRegistered: data.fingerprintRegistered,
             } as Student;
-        });
+        }).filter((student): student is Student => student !== null); // Remove nulls from the array
         setStudents(studentsData);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error cargando alumnos: ", error);
-        toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: 'No se pudieron cargar los datos de Firestore.' });
+        toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: `No se pudieron cargar los datos: ${error.message}` });
     } finally {
         setLoading(false);
     }
@@ -101,6 +105,7 @@ export default function StudentsPage() {
     };
     
     try {
+      console.log("Intentando guardar nuevo alumno. Datos:", newStudent);
       const studentRef = doc(firestore, 'students', newStudent.matricula);
       await setDoc(studentRef, newStudent);
       
@@ -136,11 +141,15 @@ export default function StudentsPage() {
   };
 
   const handleDeleteStudent = async () => {
-    if (!firestore || !studentToDelete) return;
+    if (!firestore || !studentToDelete || !studentToDelete.id) {
+        toast({ variant: 'destructive', title: 'Error', description: 'No se pudo identificar al alumno a eliminar.' });
+        setStudentToDelete(null);
+        return;
+    };
 
     try {
-      await deleteDoc(doc(firestore, 'students', studentToDelete.matricula));
-      setStudentToDelete(null);
+      await deleteDoc(doc(firestore, 'students', studentToDelete.id));
+      
       toast({
         variant: "destructive",
         title: 'Alumno Eliminado',
@@ -149,7 +158,8 @@ export default function StudentsPage() {
       fetchStudents();
     } catch (e: any) {
       console.error("Error al eliminar alumno:", e);
-      toast({ variant: 'destructive', title: 'Error al eliminar', description: e.message });
+      toast({ variant: 'destructive', title: 'Error al eliminar', description: `Ocurrió un error: ${e.message}` });
+    } finally {
       setStudentToDelete(null);
     }
   };
