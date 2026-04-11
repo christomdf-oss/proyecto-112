@@ -13,7 +13,7 @@ import { getNotificationLogs } from '@/lib/data';
 
 
 export default function DashboardPage() {
-  const { data: students, loading: studentsLoading } = useCollection<Student>('alumnos');
+  const { data: students, loading: studentsLoading } = useCollection<Student>('students');
   const { data: attendance, loading: attendanceLoading } = useCollection<Attendance>('asistencias');
   const [notificationLogs, setNotificationLogs] = React.useState<NotificationLog[]>([]);
   const [isClient, setIsClient] = React.useState(false);

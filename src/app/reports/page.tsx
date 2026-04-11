@@ -11,7 +11,7 @@ import { Search } from 'lucide-react';
 import { useCollection } from '@/firebase';
 
 export default function ReportsPage() {
-  const { data: allStudents } = useCollection<Student>('alumnos');
+  const { data: allStudents } = useCollection<Student>('students');
   const { data: allAttendance } = useCollection<Attendance>('asistencias');
 
   const [filters, setFilters] = React.useState({ name: '', group: '', matricula: '', comunidad: '' });

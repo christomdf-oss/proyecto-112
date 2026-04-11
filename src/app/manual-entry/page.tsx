@@ -36,7 +36,7 @@ const getBadgeProps = (type: Attendance['type']): { variant: BadgeVariant, text:
 }
 
 export default function ManualEntryPage() {
-  const { data: allStudents } = useCollection<Student>('alumnos');
+  const { data: allStudents } = useCollection<Student>('students');
   const { data: attendanceData } = useCollection<Attendance>('asistencias');
   const firestore = useFirestore();
 
@@ -94,11 +94,19 @@ export default function ManualEntryPage() {
   }
 
   const handleManualEntrySubmit = async (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
-    if (!selectedStudent || !firestore) {
-      const errorMsg = "La conexión con la base de datos o el alumno seleccionado no están disponibles.";
+    console.log("Intentando guardar registro manual... Datos recibidos:", data);
+
+    if (!selectedStudent) {
+        const errorMsg = "Error: No hay ningún alumno seleccionado.";
+        console.error(errorMsg);
+        alert(errorMsg);
+        return;
+    }
+
+    if (!firestore) {
+      const errorMsg = "Error de Conexión: La instancia de Firestore no está disponible.";
       console.error(errorMsg);
       alert(errorMsg);
-      toast({ variant: "destructive", title: "Error de Conexión", description: errorMsg });
       return;
     }
 
@@ -111,9 +119,9 @@ export default function ManualEntryPage() {
       reason: data.reason,
     };
 
-    console.log("Intentando guardar el siguiente registro manual:", newAttendanceRecord);
-
     try {
+      console.log("Objeto a guardar:", newAttendanceRecord);
+      console.log("Colección de destino: 'asistencias'");
       const attendanceCollection = collection(firestore, 'asistencias');
       const docRef = await addDoc(attendanceCollection, newAttendanceRecord);
       
@@ -129,11 +137,6 @@ export default function ManualEntryPage() {
     } catch (error: any) {
       console.error("Error detallado al agregar registro manual:", error);
       alert("Error al guardar registro manual: " + error.message);
-      toast({
-        variant: "destructive",
-        title: "Error al Guardar",
-        description: "No se pudo agregar el registro manual: " + error.message,
-      });
     }
   };
 

@@ -71,7 +71,7 @@
     "providers": []
   },
   "firestore": {
-    "/alumnos/{studentId}": {
+    "/students/{studentId}": {
       "schema": {
         "$ref": "#/entities/student"
       },

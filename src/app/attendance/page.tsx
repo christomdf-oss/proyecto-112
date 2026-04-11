@@ -25,7 +25,7 @@ import type * as XLSX from 'xlsx';
 
 export default function AttendancePage() {
   const { data: attendanceData } = useCollection<Attendance>('asistencias');
-  const { data: allStudents } = useCollection<Student>('alumnos');
+  const { data: allStudents } = useCollection<Student>('students');
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const { toast } = useToast();
 

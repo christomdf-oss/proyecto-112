@@ -26,7 +26,7 @@ type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (
 const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 export default function StudentsPage() {
-  const { data: students, loading } = useCollection<Student>('alumnos');
+  const { data: students, loading } = useCollection<Student>('students');
   const firestore = useFirestore();
 
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
@@ -35,15 +35,14 @@ export default function StudentsPage() {
   const { toast } = useToast();
 
   const handleAddStudent = async (data: StudentFormValues) => {
+    console.log("Intentando guardar... Datos recibidos:", data);
+
     if (!firestore) {
-      const errorMsg = "La conexión con la base de datos no está disponible.";
+      const errorMsg = "Error de Conexión: La instancia de Firestore no está disponible.";
       console.error(errorMsg);
       alert(errorMsg);
-      toast({ variant: "destructive", title: "Error de Conexión", description: errorMsg });
       return;
     }
-
-    console.log("Intentando guardar el siguiente objeto:", data);
 
     const newStudent: Omit<Student, 'id'> = {
         ...data,
@@ -51,10 +50,13 @@ export default function StudentsPage() {
     };
 
     try {
-      const studentRef = doc(firestore, 'alumnos', newStudent.matricula);
+      console.log("Objeto a guardar:", newStudent);
+      console.log("Colección de destino: 'students'");
+      
+      const studentRef = doc(firestore, 'students', newStudent.matricula);
       await setDoc(studentRef, newStudent);
       
-      console.log("¡Guardado exitoso! Documento ID:", newStudent.matricula);
+      console.log("¡Documento guardado con éxito en Firestore! ID:", newStudent.matricula);
       alert("¡Alumno guardado con éxito!");
       
       setIsAddStudentOpen(false);
@@ -64,13 +66,8 @@ export default function StudentsPage() {
       });
 
     } catch (error: any) {
-      console.error("Error detallado al añadir documento: ", error);
+      console.error("Error detallado al añadir documento:", error);
       alert("Error al guardar: " + error.message);
-      toast({
-          variant: "destructive",
-          title: "Error al Registrar",
-          description: "No se pudo guardar el alumno: " + error.message,
-      });
     }
   };
   
@@ -112,18 +109,17 @@ export default function StudentsPage() {
   };
 
   const handleEnrollSuccess = async (matricula: string) => {
+    console.log("Intentando actualizar estado de huella para matrícula:", matricula);
     if (!firestore) {
-       const errorMsg = "La conexión con la base de datos no está disponible.";
+       const errorMsg = "Error de Conexión: La instancia de Firestore no está disponible.";
       console.error(errorMsg);
       alert(errorMsg);
-      toast({ variant: "destructive", title: "Error de Conexión", description: errorMsg });
       return;
     }
     
-    console.log("Intentando actualizar estado de huella para matrícula:", matricula);
-
     try {
-      const studentRef = doc(firestore, 'alumnos', matricula);
+      console.log("Colección de destino: 'students'");
+      const studentRef = doc(firestore, 'students', matricula);
       await setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
 
       console.log("¡Actualización de huella exitosa!");
@@ -131,11 +127,6 @@ export default function StudentsPage() {
     } catch (error: any) {
       console.error("Error detallado al actualizar estado de huella: ", error);
       alert("Error al actualizar el estado de la huella: " + error.message);
-      toast({
-        variant: "destructive",
-        title: "Error al Actualizar",
-        description: "No se pudo actualizar el estado de la huella: " + error.message,
-      });
     }
   };
   
