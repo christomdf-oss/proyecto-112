@@ -93,8 +93,8 @@ export default function ManualEntryPage() {
     setFilters({ name: '', matricula: '' });
   }
 
-  const handleManualEntrySubmit = async (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
-    if (!selectedStudent) return;
+  const handleManualEntrySubmit = (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
+    if (!selectedStudent || !firestore) return;
 
     const newAttendanceRecord: Omit<Attendance, 'id'> = {
       studentId: selectedStudent.matricula,
@@ -105,26 +105,26 @@ export default function ManualEntryPage() {
       reason: data.reason,
     };
     
-    try {
-      const attendanceCollection = collection(firestore, 'asistencias');
-      await addDoc(attendanceCollection, newAttendanceRecord);
+    const attendanceCollection = collection(firestore, 'asistencias');
+    addDoc(attendanceCollection, newAttendanceRecord)
+      .then(() => {
+        toast({
+            title: "Registro Manual Exitoso",
+            description: `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`,
+        });
 
-      toast({
-          title: "Registro Manual Exitoso",
-          description: `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`,
+        setSelectedStudent(null); // Go back to the main view
+        handleClearSearch();
+
+      })
+      .catch((error) => {
+        console.error("Error adding manual entry:", error);
+        toast({
+          variant: "destructive",
+          title: "Error al Guardar",
+          description: "No se pudo agregar el registro manual. Intenta de nuevo.",
+        });
       });
-
-      setSelectedStudent(null); // Go back to the main view
-      handleClearSearch();
-
-    } catch (error) {
-      console.error("Error adding manual entry:", error);
-      toast({
-        variant: "destructive",
-        title: "Error al Guardar",
-        description: "No se pudo agregar el registro manual. Intenta de nuevo.",
-      });
-    }
   };
 
   if (selectedStudent) {
