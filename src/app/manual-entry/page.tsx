@@ -94,7 +94,13 @@ export default function ManualEntryPage() {
   }
 
   const handleManualEntrySubmit = async (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
-    if (!selectedStudent || !firestore) return;
+    if (!selectedStudent || !firestore) {
+      const errorMsg = "La conexión con la base de datos o el alumno seleccionado no están disponibles.";
+      console.error(errorMsg);
+      alert(errorMsg);
+      toast({ variant: "destructive", title: "Error de Conexión", description: errorMsg });
+      return;
+    }
 
     const newAttendanceRecord: Omit<Attendance, 'id'> = {
       studentId: selectedStudent.matricula,
@@ -104,10 +110,16 @@ export default function ManualEntryPage() {
       isManual: true,
       reason: data.reason,
     };
-    
-    const attendanceCollection = collection(firestore, 'asistencias');
+
+    console.log("Intentando guardar el siguiente registro manual:", newAttendanceRecord);
+
     try {
-      await addDoc(attendanceCollection, newAttendanceRecord);
+      const attendanceCollection = collection(firestore, 'asistencias');
+      const docRef = await addDoc(attendanceCollection, newAttendanceRecord);
+      
+      console.log("¡Registro manual guardado con éxito! Documento ID:", docRef.id);
+      alert("¡Registro manual guardado con éxito!");
+
       toast({
           title: "Registro Manual Exitoso",
           description: `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`,
@@ -115,7 +127,8 @@ export default function ManualEntryPage() {
       setSelectedStudent(null);
       handleClearSearch();
     } catch (error: any) {
-      console.error("Error adding manual entry:", error);
+      console.error("Error detallado al agregar registro manual:", error);
+      alert("Error al guardar registro manual: " + error.message);
       toast({
         variant: "destructive",
         title: "Error al Guardar",

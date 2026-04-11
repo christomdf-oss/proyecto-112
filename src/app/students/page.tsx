@@ -36,30 +36,36 @@ export default function StudentsPage() {
 
   const handleAddStudent = async (data: StudentFormValues) => {
     if (!firestore) {
-      toast({
-        variant: "destructive",
-        title: "Error de Conexión",
-        description: "No se pudo conectar a la base de datos.",
-      });
+      const errorMsg = "La conexión con la base de datos no está disponible.";
+      console.error(errorMsg);
+      alert(errorMsg);
+      toast({ variant: "destructive", title: "Error de Conexión", description: errorMsg });
       return;
     }
-    
+
+    console.log("Intentando guardar el siguiente objeto:", data);
+
     const newStudent: Omit<Student, 'id'> = {
         ...data,
         fingerprintRegistered: false,
     };
 
-    const studentRef = doc(firestore, 'alumnos', newStudent.matricula);
-    
     try {
+      const studentRef = doc(firestore, 'alumnos', newStudent.matricula);
       await setDoc(studentRef, newStudent);
+      
+      console.log("¡Guardado exitoso! Documento ID:", newStudent.matricula);
+      alert("¡Alumno guardado con éxito!");
+      
       setIsAddStudentOpen(false);
       toast({
           title: "Alumno Registrado",
           description: `${data.nombre} ha sido agregado exitosamente.`,
       });
+
     } catch (error: any) {
-      console.error("Error detallado al añadir alumno: ", error);
+      console.error("Error detallado al añadir documento: ", error);
+      alert("Error al guardar: " + error.message);
       toast({
           variant: "destructive",
           title: "Error al Registrar",
@@ -106,13 +112,25 @@ export default function StudentsPage() {
   };
 
   const handleEnrollSuccess = async (matricula: string) => {
-    if (!firestore) return;
-    const studentRef = doc(firestore, 'alumnos', matricula);
+    if (!firestore) {
+       const errorMsg = "La conexión con la base de datos no está disponible.";
+      console.error(errorMsg);
+      alert(errorMsg);
+      toast({ variant: "destructive", title: "Error de Conexión", description: errorMsg });
+      return;
+    }
+    
+    console.log("Intentando actualizar estado de huella para matrícula:", matricula);
+
     try {
+      const studentRef = doc(firestore, 'alumnos', matricula);
       await setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
-      // Success is handled visually, no toast needed here to avoid duplication.
+
+      console.log("¡Actualización de huella exitosa!");
+
     } catch (error: any) {
-      console.error("Error updating fingerprint status: ", error);
+      console.error("Error detallado al actualizar estado de huella: ", error);
+      alert("Error al actualizar el estado de la huella: " + error.message);
       toast({
         variant: "destructive",
         title: "Error al Actualizar",
