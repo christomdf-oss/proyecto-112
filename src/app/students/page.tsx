@@ -54,7 +54,14 @@ export default function StudentsPage() {
       console.log("Colección de destino: 'students'");
       
       const studentRef = doc(firestore, 'students', newStudent.matricula);
-      await setDoc(studentRef, newStudent);
+      
+      const savePromise = setDoc(studentRef, newStudent);
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
+      );
+
+      await Promise.race([savePromise, timeoutPromise]);
       
       console.log("¡Documento guardado con éxito en Firestore! ID:", newStudent.matricula);
       alert("¡Alumno guardado con éxito!");
@@ -66,8 +73,12 @@ export default function StudentsPage() {
       });
 
     } catch (error: any) {
+      const errorMessage = error.message.includes("Tiempo de espera agotado") 
+        ? "Error: Tiempo de espera agotado"
+        : `Error al guardar: ${error.message}`;
+        
       console.error("Error detallado al añadir documento:", error);
-      alert("Error al guardar: " + error.message);
+      window.alert(errorMessage);
     }
   };
   
@@ -120,13 +131,24 @@ export default function StudentsPage() {
     try {
       console.log("Colección de destino: 'students'");
       const studentRef = doc(firestore, 'students', matricula);
-      await setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
+      
+      const updatePromise = setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
+      );
+
+      await Promise.race([updatePromise, timeoutPromise]);
 
       console.log("¡Actualización de huella exitosa!");
 
     } catch (error: any) {
+      const errorMessage = error.message.includes("Tiempo de espera agotado") 
+        ? "Error: Tiempo de espera agotado"
+        : `Error al actualizar el estado de la huella: ${error.message}`;
+        
       console.error("Error detallado al actualizar estado de huella: ", error);
-      alert("Error al actualizar el estado de la huella: " + error.message);
+      window.alert(errorMessage);
     }
   };
   

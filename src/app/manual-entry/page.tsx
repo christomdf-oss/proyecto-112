@@ -123,7 +123,14 @@ export default function ManualEntryPage() {
       console.log("Objeto a guardar:", newAttendanceRecord);
       console.log("Colección de destino: 'asistencias'");
       const attendanceCollection = collection(firestore, 'asistencias');
-      const docRef = await addDoc(attendanceCollection, newAttendanceRecord);
+      
+      const savePromise = addDoc(attendanceCollection, newAttendanceRecord);
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
+      );
+
+      const docRef = await Promise.race([savePromise, timeoutPromise]);
       
       console.log("¡Registro manual guardado con éxito! Documento ID:", docRef.id);
       alert("¡Registro manual guardado con éxito!");
@@ -135,8 +142,12 @@ export default function ManualEntryPage() {
       setSelectedStudent(null);
       handleClearSearch();
     } catch (error: any) {
+      const errorMessage = error.message.includes("Tiempo de espera agotado") 
+        ? "Error: Tiempo de espera agotado"
+        : `Error al guardar registro manual: ${error.message}`;
+        
       console.error("Error detallado al agregar registro manual:", error);
-      alert("Error al guardar registro manual: " + error.message);
+      window.alert(errorMessage);
     }
   };
 
