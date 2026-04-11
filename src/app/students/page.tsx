@@ -26,7 +26,7 @@ type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (
 const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 export default function StudentsPage() {
-  const { data: students } = useCollection<Student>('alumnos');
+  const { data: students, loading } = useCollection<Student>('alumnos');
   const firestore = useFirestore();
 
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
@@ -35,14 +35,23 @@ export default function StudentsPage() {
   const { toast } = useToast();
 
   const handleAddStudent = (data: StudentFormValues) => {
-    if (!firestore) return;
+    if (!firestore) {
+      toast({
+        variant: "destructive",
+        title: "Error de Conexión",
+        description: "No se pudo conectar a la base de datos.",
+      });
+      return;
+    }
     
-    const newStudent: Student = {
+    // Create the student object without the 'id' property.
+    const newStudent: Omit<Student, 'id'> = {
         ...data,
         fingerprintRegistered: false,
     };
 
     const studentRef = doc(firestore, 'alumnos', newStudent.matricula);
+    
     setDoc(studentRef, newStudent)
       .then(() => {
         setIsAddStudentOpen(false);
@@ -56,7 +65,7 @@ export default function StudentsPage() {
         toast({
             variant: "destructive",
             title: "Error al registrar",
-            description: "No se pudo guardar el alumno. Inténtalo de nuevo.",
+            description: "No se pudo guardar el alumno. " + error.message,
         });
       });
   };
