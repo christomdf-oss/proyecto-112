@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -18,21 +18,61 @@ import { StudentForm } from './student-form';
 import type { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { EnrollFingerprintDialog } from './enroll-fingerprint-dialog';
-import { useCollection, useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
 
 type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
 
 const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
 
 export default function StudentsPage() {
-  const { data: students, loading } = useCollection<Student>('students');
   const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const [students, setStudents] = React.useState<Student[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
   const [enrollmentStudent, setEnrollmentStudent] = React.useState<Student | null>(null);
   const [comunidades, setComunidades] = React.useState(initialComunidades);
-  const { toast } = useToast();
+  
+  const fetchStudents = React.useCallback(async () => {
+    if (!firestore) {
+        console.log("Firestore no está listo, saltando fetch.");
+        return;
+    };
+    setLoading(true);
+    console.log("Iniciando carga de alumnos...");
+    try {
+        const querySnapshot = await getDocs(collection(firestore, "students"));
+        const studentsData = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                matricula: data.matricula,
+                nombre: data.nombre,
+                telefono_tutor: data.telefono_tutor,
+                grupo: data.grupo,
+                comunidad: data.comunidad,
+                fingerprintRegistered: data.fingerprintRegistered,
+            } as Student;
+        });
+        setStudents(studentsData);
+        console.log("Alumnos cargados:", studentsData);
+    } catch (error) {
+        console.error("Error cargando alumnos: ", error);
+        toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: 'No se pudieron cargar los datos de Firestore.' });
+    } finally {
+        setLoading(false);
+    }
+}, [firestore, toast]);
+
+  React.useEffect(() => {
+      if(firestore) {
+        fetchStudents();
+      }
+  }, [firestore, fetchStudents]);
+
 
   const handleAddStudent = async (data: StudentFormValues) => {
     console.log("Intentando guardar... Datos recibidos:", data);
@@ -71,6 +111,7 @@ export default function StudentsPage() {
           title: "Alumno Registrado",
           description: `${data.nombre} ha sido agregado exitosamente.`,
       });
+      fetchStudents(); 
 
     } catch (error: any) {
       const errorMessage = error.message.includes("Tiempo de espera agotado") 
@@ -141,6 +182,7 @@ export default function StudentsPage() {
       await Promise.race([updatePromise, timeoutPromise]);
 
       console.log("¡Actualización de huella exitosa!");
+      fetchStudents(); 
 
     } catch (error: any) {
       const errorMessage = error.message.includes("Tiempo de espera agotado") 
@@ -160,30 +202,36 @@ export default function StudentsPage() {
         title="Gestión de Alumnos"
         description="Ver, agregar y gestionar perfiles de alumnos."
       >
-        <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Registrar Alumno
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Registrar Nuevo Alumno</DialogTitle>
-                </DialogHeader>
-                <StudentForm 
-                    onSubmit={handleAddStudent}
-                    onClose={() => setIsAddStudentOpen(false)}
-                    comunidades={comunidades}
-                    onAddComunidad={handleAddComunidad}
-                    onRemoveComunidad={handleRemoveComunidad}
-                />
-            </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={fetchStudents} disabled={loading}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refrescar
+            </Button>
+            <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Registrar Alumno
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Registrar Nuevo Alumno</DialogTitle>
+                    </DialogHeader>
+                    <StudentForm 
+                        onSubmit={handleAddStudent}
+                        onClose={() => setIsAddStudentOpen(false)}
+                        comunidades={comunidades}
+                        onAddComunidad={handleAddComunidad}
+                        onRemoveComunidad={handleRemoveComunidad}
+                    />
+                </DialogContent>
+            </Dialog>
+        </div>
       </PageHeader>
       <Card>
         <CardContent className="pt-6">
-          <DataTable columns={studentColumns} data={students ?? []} />
+          <DataTable columns={studentColumns} data={students} isLoading={loading} />
         </CardContent>
       </Card>
       
