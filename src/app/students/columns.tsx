@@ -14,7 +14,14 @@ import {
 import type { Student } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 
-export const getColumns = ({ onEnroll }: { onEnroll: (student: Student) => void }): ColumnDef<Student>[] => [
+interface GetColumnsProps {
+  onEnroll: (student: Student) => void;
+  onEdit: (student: Student) => void;
+  onDelete: (student: Student) => void;
+  onCopyMatricula: (matricula: string) => void;
+}
+
+export const getColumns = ({ onEnroll, onEdit, onDelete, onCopyMatricula }: GetColumnsProps): ColumnDef<Student>[] => [
   {
     accessorKey: 'nombre',
     header: 'Nombre',
@@ -64,7 +71,7 @@ export const getColumns = ({ onEnroll }: { onEnroll: (student: Student) => void 
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(student.matricula)}
+                onClick={() => onCopyMatricula(student.matricula)}
               >
                 Copiar Matrícula
               </DropdownMenuItem>
@@ -74,8 +81,15 @@ export const getColumns = ({ onEnroll }: { onEnroll: (student: Student) => void 
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Editar Perfil</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">Eliminar Perfil</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(student)}>
+                Editar Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                onClick={() => onDelete(student)}
+              >
+                Eliminar Perfil
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

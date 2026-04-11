@@ -7,10 +7,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DataTable } from './data-table';
 import { getColumns } from './columns';
 import { PageHeader } from '@/components/page-header';
@@ -19,7 +27,7 @@ import type { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { EnrollFingerprintDialog } from './enroll-fingerprint-dialog';
 import { useFirestore } from '@/firebase';
-import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 
 type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
 
@@ -32,17 +40,16 @@ export default function StudentsPage() {
   const [students, setStudents] = React.useState<Student[]>([]);
   const [loading, setLoading] = React.useState(true);
 
-  const [isAddStudentOpen, setIsAddStudentOpen] = React.useState(false);
+  const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [editingStudent, setEditingStudent] = React.useState<Student | null>(null);
+  const [studentToDelete, setStudentToDelete] = React.useState<Student | null>(null);
+
   const [enrollmentStudent, setEnrollmentStudent] = React.useState<Student | null>(null);
   const [comunidades, setComunidades] = React.useState(initialComunidades);
   
   const fetchStudents = React.useCallback(async () => {
-    if (!firestore) {
-        console.log("Firestore no está listo, saltando fetch.");
-        return;
-    };
+    if (!firestore) return;
     setLoading(true);
-    console.log("Iniciando carga de alumnos...");
     try {
         const querySnapshot = await getDocs(collection(firestore, "students"));
         const studentsData = querySnapshot.docs.map(doc => {
@@ -58,7 +65,6 @@ export default function StudentsPage() {
             } as Student;
         });
         setStudents(studentsData);
-        console.log("Alumnos cargados:", studentsData);
     } catch (error) {
         console.error("Error cargando alumnos: ", error);
         toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: 'No se pudieron cargar los datos de Firestore.' });
@@ -73,53 +79,78 @@ export default function StudentsPage() {
       }
   }, [firestore, fetchStudents]);
 
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingStudent(null);
+  };
+
+  const handleFormSubmit = async (data: StudentFormValues) => {
+    if (editingStudent) { // Update logic
+      await handleUpdateStudent(data);
+    } else { // Create logic
+      await handleAddStudent(data);
+    }
+  };
 
   const handleAddStudent = async (data: StudentFormValues) => {
-    console.log("Intentando guardar... Datos recibidos:", data);
-
-    if (!firestore) {
-      const errorMsg = "Error de Conexión: La instancia de Firestore no está disponible.";
-      console.error(errorMsg);
-      alert(errorMsg);
-      return;
-    }
+    if (!firestore) return;
 
     const newStudent: Omit<Student, 'id'> = {
         ...data,
         fingerprintRegistered: false,
     };
-
+    
     try {
-      console.log("Objeto a guardar:", newStudent);
-      console.log("Colección de destino: 'students'");
-      
       const studentRef = doc(firestore, 'students', newStudent.matricula);
+      await setDoc(studentRef, newStudent);
       
-      const savePromise = setDoc(studentRef, newStudent);
-      
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
-      );
-
-      await Promise.race([savePromise, timeoutPromise]);
-      
-      console.log("¡Documento guardado con éxito en Firestore! ID:", newStudent.matricula);
-      window.alert("¡Alumno guardado con éxito!");
-      
-      setIsAddStudentOpen(false);
+      closeForm();
       toast({
           title: "Alumno Registrado",
           description: `${data.nombre} ha sido agregado exitosamente.`,
       });
       fetchStudents(); 
-
     } catch (error: any) {
-      const errorMessage = error.message.includes("Tiempo de espera agotado") 
-        ? "Error: Tiempo de espera agotado"
-        : `Error al guardar: ${error.message}`;
-        
       console.error("Error detallado al añadir documento:", error);
-      window.alert(errorMessage);
+      window.alert(`Error al guardar: ${error.message}`);
+    }
+  };
+
+  const handleUpdateStudent = async (data: StudentFormValues) => {
+    if (!firestore || !editingStudent) return;
+
+    try {
+      const studentRef = doc(firestore, 'students', editingStudent.matricula);
+      await setDoc(studentRef, data, { merge: true });
+
+      closeForm();
+      toast({
+        title: 'Alumno Actualizado',
+        description: `El perfil de ${data.nombre} ha sido actualizado.`,
+      });
+      fetchStudents();
+    } catch (e: any) {
+       console.error("Error al actualizar alumno:", e);
+       toast({ variant: 'destructive', title: 'Error al actualizar', description: e.message });
+    }
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!firestore || !studentToDelete) return;
+
+    try {
+      await deleteDoc(doc(firestore, 'students', studentToDelete.matricula));
+      setStudentToDelete(null);
+      toast({
+        variant: "destructive",
+        title: 'Alumno Eliminado',
+        description: `El perfil de ${studentToDelete.nombre} ha sido eliminado.`,
+      });
+      fetchStudents();
+    } catch (e: any) {
+      console.error("Error al eliminar alumno:", e);
+      toast({ variant: 'destructive', title: 'Error al eliminar', description: e.message });
+      setStudentToDelete(null);
     }
   };
   
@@ -161,40 +192,38 @@ export default function StudentsPage() {
   };
 
   const handleEnrollSuccess = async (matricula: string) => {
-    console.log("Intentando actualizar estado de huella para matrícula:", matricula);
-    if (!firestore) {
-       const errorMsg = "Error de Conexión: La instancia de Firestore no está disponible.";
-      console.error(errorMsg);
-      alert(errorMsg);
-      return;
-    }
+    if (!firestore) return;
     
     try {
-      console.log("Colección de destino: 'students'");
       const studentRef = doc(firestore, 'students', matricula);
-      
-      const updatePromise = setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
-
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
-      );
-
-      await Promise.race([updatePromise, timeoutPromise]);
-
-      console.log("¡Actualización de huella exitosa!");
+      await setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
+      toast({ title: 'Huella Registrada', description: 'El estado de la huella ha sido actualizado.' });
       fetchStudents(); 
-
     } catch (error: any) {
-      const errorMessage = error.message.includes("Tiempo de espera agotado") 
-        ? "Error: Tiempo de espera agotado"
-        : `Error al actualizar el estado de la huella: ${error.message}`;
-        
-      console.error("Error detallado al actualizar estado de huella: ", error);
-      window.alert(errorMessage);
+      window.alert(`Error al actualizar el estado de la huella: ${error.message}`);
     }
   };
+
+  const handleEdit = (student: Student) => {
+    setEditingStudent(student);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (student: Student) => {
+    setStudentToDelete(student);
+  };
   
-  const studentColumns = getColumns({ onEnroll: handleOpenEnrollDialog });
+  const handleCopyMatricula = (matricula: string) => {
+    navigator.clipboard.writeText(matricula);
+    toast({ title: 'Copiado', description: 'La matrícula ha sido copiada al portapapeles.' });
+  }
+  
+  const studentColumns = getColumns({ 
+    onEnroll: handleOpenEnrollDialog,
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+    onCopyMatricula: handleCopyMatricula
+  });
 
   return (
     <div className="container mx-auto py-2">
@@ -207,23 +236,22 @@ export default function StudentsPage() {
               <RefreshCw className="mr-2 h-4 w-4" />
               Refrescar
             </Button>
-            <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
+            <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeForm()}>
                 <DialogTrigger asChild>
-                    <Button>
+                    <Button onClick={() => setIsFormOpen(true)}>
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Registrar Alumno
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Registrar Nuevo Alumno</DialogTitle>
-                    </DialogHeader>
                     <StudentForm 
-                        onSubmit={handleAddStudent}
-                        onClose={() => setIsAddStudentOpen(false)}
+                        key={editingStudent?.matricula || 'new'}
+                        onSubmit={handleFormSubmit}
+                        onClose={closeForm}
                         comunidades={comunidades}
                         onAddComunidad={handleAddComunidad}
                         onRemoveComunidad={handleRemoveComunidad}
+                        initialData={editingStudent}
                     />
                 </DialogContent>
             </Dialog>
@@ -242,6 +270,23 @@ export default function StudentsPage() {
             onClose={handleCloseEnrollDialog}
         />
       )}
+
+      <AlertDialog open={!!studentToDelete} onOpenChange={(open) => !open && setStudentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el perfil de <strong>{studentToDelete?.nombre}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setStudentToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteStudent}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
