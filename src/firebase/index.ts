@@ -1,26 +1,24 @@
+'use client';
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-// Provides a memoized Firebase app instance.
-let firebaseApp: FirebaseApp;
+// This function ensures we only initialize once
+const getFirebaseServices = () => {
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const firestore = initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+    });
+    return { app, auth, firestore };
+};
+
+const firebaseServices = getFirebaseServices();
+
+// Provides a memoized Firebase app instance by exporting the already initialized services.
 export const initializeFirebase = (): { app: FirebaseApp; auth: Auth; firestore: Firestore } => {
-  if (firebaseApp) {
-    const app = getApp();
-    return { app, auth: getAuth(app), firestore: getFirestore(app) };
-  }
-
-  if (getApps().length === 0) {
-    firebaseApp = initializeApp(firebaseConfig);
-  } else {
-    firebaseApp = getApp();
-  }
-
-  const auth = getAuth(firebaseApp);
-  const firestore = getFirestore(firebaseApp);
-
-  return { app: firebaseApp, auth, firestore };
+  return firebaseServices;
 };
 
 
