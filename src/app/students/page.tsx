@@ -64,7 +64,7 @@ export default function StudentsPage() {
       await Promise.race([savePromise, timeoutPromise]);
       
       console.log("¡Documento guardado con éxito en Firestore! ID:", newStudent.matricula);
-      alert("¡Alumno guardado con éxito!");
+      window.alert("¡Alumno guardado con éxito!");
       
       setIsAddStudentOpen(false);
       toast({
