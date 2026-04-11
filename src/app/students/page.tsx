@@ -34,7 +34,7 @@ export default function StudentsPage() {
   const [comunidades, setComunidades] = React.useState(initialComunidades);
   const { toast } = useToast();
 
-  const handleAddStudent = (data: StudentFormValues) => {
+  const handleAddStudent = async (data: StudentFormValues) => {
     if (!firestore) {
       toast({
         variant: "destructive",
@@ -44,7 +44,6 @@ export default function StudentsPage() {
       return;
     }
     
-    // Create the student object without the 'id' property.
     const newStudent: Omit<Student, 'id'> = {
         ...data,
         fingerprintRegistered: false,
@@ -52,22 +51,21 @@ export default function StudentsPage() {
 
     const studentRef = doc(firestore, 'alumnos', newStudent.matricula);
     
-    setDoc(studentRef, newStudent)
-      .then(() => {
-        setIsAddStudentOpen(false);
-        toast({
-            title: "Alumno Registrado",
-            description: `${data.nombre} ha sido agregado exitosamente a la base de datos.`,
-        });
-      })
-      .catch((error) => {
-        console.error("Error adding student: ", error);
-        toast({
-            variant: "destructive",
-            title: "Error al registrar",
-            description: "No se pudo guardar el alumno. " + error.message,
-        });
+    try {
+      await setDoc(studentRef, newStudent);
+      setIsAddStudentOpen(false);
+      toast({
+          title: "Alumno Registrado",
+          description: `${data.nombre} ha sido agregado exitosamente.`,
       });
+    } catch (error: any) {
+      console.error("Error detallado al añadir alumno: ", error);
+      toast({
+          variant: "destructive",
+          title: "Error al Registrar",
+          description: "No se pudo guardar el alumno: " + error.message,
+      });
+    }
   };
   
   const handleAddComunidad = (newComunidad: string) => {
@@ -107,18 +105,20 @@ export default function StudentsPage() {
     setEnrollmentStudent(null);
   };
 
-  const handleEnrollSuccess = (matricula: string) => {
+  const handleEnrollSuccess = async (matricula: string) => {
     if (!firestore) return;
     const studentRef = doc(firestore, 'alumnos', matricula);
-    setDoc(studentRef, { fingerprintRegistered: true }, { merge: true })
-      .catch((error) => {
-        console.error("Error updating fingerprint status: ", error);
-        toast({
-          variant: "destructive",
-          title: "Error al actualizar",
-          description: "No se pudo actualizar el estado de la huella.",
-        });
+    try {
+      await setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
+      // Success is handled visually, no toast needed here to avoid duplication.
+    } catch (error: any) {
+      console.error("Error updating fingerprint status: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error al Actualizar",
+        description: "No se pudo actualizar el estado de la huella: " + error.message,
       });
+    }
   };
   
   const studentColumns = getColumns({ onEnroll: handleOpenEnrollDialog });

@@ -93,7 +93,7 @@ export default function ManualEntryPage() {
     setFilters({ name: '', matricula: '' });
   }
 
-  const handleManualEntrySubmit = (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
+  const handleManualEntrySubmit = async (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
     if (!selectedStudent || !firestore) return;
 
     const newAttendanceRecord: Omit<Attendance, 'id'> = {
@@ -106,25 +106,22 @@ export default function ManualEntryPage() {
     };
     
     const attendanceCollection = collection(firestore, 'asistencias');
-    addDoc(attendanceCollection, newAttendanceRecord)
-      .then(() => {
-        toast({
-            title: "Registro Manual Exitoso",
-            description: `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`,
-        });
-
-        setSelectedStudent(null); // Go back to the main view
-        handleClearSearch();
-
-      })
-      .catch((error) => {
-        console.error("Error adding manual entry:", error);
-        toast({
-          variant: "destructive",
-          title: "Error al Guardar",
-          description: "No se pudo agregar el registro manual. Intenta de nuevo.",
-        });
+    try {
+      await addDoc(attendanceCollection, newAttendanceRecord);
+      toast({
+          title: "Registro Manual Exitoso",
+          description: `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`,
       });
+      setSelectedStudent(null);
+      handleClearSearch();
+    } catch (error: any) {
+      console.error("Error adding manual entry:", error);
+      toast({
+        variant: "destructive",
+        title: "Error al Guardar",
+        description: "No se pudo agregar el registro manual: " + error.message,
+      });
+    }
   };
 
   if (selectedStudent) {
@@ -257,7 +254,7 @@ export default function ManualEntryPage() {
                 <CardHeader>
                     <CardTitle>Justificaciones y Registros Manuales</CardTitle>
                      <CardDescription>
-                        Estos son los registros que se han añadido manualmente el día de hoy.
+                        Estos son los registros que se han añadido manually el día de hoy.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="max-h-[60vh] overflow-y-auto">

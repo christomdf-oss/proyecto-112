@@ -1,22 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny all reads and writes
     match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Allow public read and write access for development.
-    // In a real production app, this should be restricted to authenticated users.
-    // e.g., for writes: `allow write: if request.auth != null;`
-    match /alumnos/{studentId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    match /asistencias/{asistenciaId} {
-      allow read: if true;
-      allow write: if true;
+      allow read, write: if true;
     }
   }
 }
