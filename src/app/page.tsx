@@ -8,14 +8,51 @@ import AttendanceFeed from '@/components/dashboard/attendance-feed';
 import NotificationsPanel from '@/components/dashboard/notifications-panel';
 import type { Student, Attendance, NotificationLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCollection } from '@/firebase';
+import { useFirestore } from '@/firebase';
+import { getDocs, collection } from 'firebase/firestore';
 
 export default function DashboardPage() {
-  const { data: students, loading: studentsLoading } = useCollection<Student>('students');
-  const { data: attendance, loading: attendanceLoading } = useCollection<Attendance>('asistencias');
+  const firestore = useFirestore();
+  const [students, setStudents] = React.useState<Student[] | null>(null);
+  const [attendance, setAttendance] = React.useState<Attendance[] | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  
   // The notification system is not yet connected to a real backend.
   // It defaults to an empty array to prevent crashing.
   const [notificationLogs] = React.useState<NotificationLog[]>([]);
+
+  React.useEffect(() => {
+    if (!firestore) return;
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const studentsQuery = await getDocs(collection(firestore, 'students'));
+            const studentsList = studentsQuery.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
+            setStudents(studentsList);
+
+            const attendanceQuery = await getDocs(collection(firestore, 'asistencias'));
+            const attendanceList = attendanceQuery.docs.map(doc => {
+                 const data = doc.data();
+                 for (const key in data) {
+                     if (data[key] && typeof data[key].toDate === 'function') {
+                         data[key] = data[key].toDate();
+                     }
+                 }
+                 return { id: doc.id, ...data } as Attendance;
+            });
+            setAttendance(attendanceList);
+
+        } catch (error) {
+            console.error("Error fetching dashboard data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchData();
+  }, [firestore]);
+
 
   const { presentToday, eventsToday, notificationsLast24h } = React.useMemo(() => {
     if (!attendance) {
@@ -42,8 +79,6 @@ export default function DashboardPage() {
     return { presentToday, eventsToday, notificationsLast24h };
   }, [attendance, notificationLogs]);
   
-  const loading = studentsLoading || attendanceLoading;
-
   const StatCardSkeleton = () => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

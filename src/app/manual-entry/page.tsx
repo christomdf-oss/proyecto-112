@@ -14,8 +14,8 @@ import { isSameDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 
 type BadgeVariant = 'success' | 'destructive' | 'secondary' | 'outline' | 'default';
@@ -36,9 +36,10 @@ const getBadgeProps = (type: Attendance['type']): { variant: BadgeVariant, text:
 }
 
 export default function ManualEntryPage() {
-  const { data: allStudents, loading: studentsLoading } = useCollection<Student>('students');
-  const { data: attendanceData, loading: attendanceLoading } = useCollection<Attendance>('asistencias');
   const firestore = useFirestore();
+  const [allStudents, setAllStudents] = React.useState<Student[]>([]);
+  const [attendanceData, setAttendanceData] = React.useState<Attendance[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   const [filters, setFilters] = React.useState({ name: '', matricula: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
@@ -47,7 +48,40 @@ export default function ManualEntryPage() {
   const { toast } = useToast();
   
   const today = new Date();
-  const loading = studentsLoading || attendanceLoading;
+  
+  React.useEffect(() => {
+    if (!firestore) return;
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const studentsQuery = await getDocs(collection(firestore, 'students'));
+            const studentsList = studentsQuery.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student)).filter(s => s.matricula && s.nombre);
+            setAllStudents(studentsList);
+
+            const attendanceQuery = await getDocs(collection(firestore, 'asistencias'));
+            const attendanceList = attendanceQuery.docs.map(doc => {
+                 const data = doc.data();
+                 for (const key in data) {
+                     if (data[key] && typeof data[key].toDate === 'function') {
+                         data[key] = data[key].toDate();
+                     }
+                 }
+                 return { id: doc.id, ...data } as Attendance;
+            });
+            setAttendanceData(attendanceList);
+
+        } catch (error) {
+            console.error("Error fetching data for manual entry:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'No se pudieron cargar los datos.' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchData();
+}, [firestore, toast]);
+
 
   // Logic for Ausentes Hoy
   const absentToday = React.useMemo(() => {
