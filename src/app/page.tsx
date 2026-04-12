@@ -9,18 +9,16 @@ import NotificationsPanel from '@/components/dashboard/notifications-panel';
 import type { Student, Attendance, NotificationLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore } from '@/firebase';
-import { getDocs, collection } from 'firebase/firestore';
+import { getDocs, collection, query, limit, orderBy } from 'firebase/firestore';
+import { isSameDay } from 'date-fns';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
   const [students, setStudents] = React.useState<Student[] | null>(null);
   const [attendance, setAttendance] = React.useState<Attendance[] | null>(null);
+  const [notificationLogs, setNotificationLogs] = React.useState<NotificationLog[] | null>(null);
   const [loading, setLoading] = React.useState(true);
   
-  // The notification system is not yet connected to a real backend.
-  // It defaults to an empty array to prevent crashing.
-  const [notificationLogs] = React.useState<NotificationLog[]>([]);
-
   React.useEffect(() => {
     if (!firestore) return;
 
@@ -31,7 +29,7 @@ export default function DashboardPage() {
             const studentsList = studentsQuery.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
             setStudents(studentsList);
 
-            const attendanceQuery = await getDocs(collection(firestore, 'asistencias'));
+            const attendanceQuery = await getDocs(query(collection(firestore, 'asistencias'), orderBy('timestamp', 'desc')));
             const attendanceList = attendanceQuery.docs.map(doc => {
                  const data = doc.data();
                  for (const key in data) {
@@ -42,6 +40,16 @@ export default function DashboardPage() {
                  return { id: doc.id, ...data } as Attendance;
             });
             setAttendance(attendanceList);
+
+            const notificationsQuery = await getDocs(query(collection(firestore, 'notificationLogs'), orderBy('timestamp', 'desc'), limit(10)));
+            const notificationsList = notificationsQuery.docs.map(doc => {
+                 const data = doc.data();
+                 if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+                     data.timestamp = data.timestamp.toDate();
+                 }
+                 return { id: doc.id, ...data } as NotificationLog;
+            });
+            setNotificationLogs(notificationsList);
 
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
@@ -55,13 +63,11 @@ export default function DashboardPage() {
 
 
   const { presentToday, eventsToday, notificationsLast24h } = React.useMemo(() => {
-    if (!attendance) {
+    if (!attendance || !notificationLogs) {
       return { presentToday: 0, eventsToday: 0, notificationsLast24h: 0 };
     }
-
-    const todayString = new Date().toDateString();
     
-    const todaysAttendance = attendance.filter(a => a.timestamp && a.timestamp.toDateString() === todayString);
+    const todaysAttendance = attendance.filter(a => a.timestamp && isSameDay(a.timestamp, new Date()));
     const eventsToday = todaysAttendance.length;
 
     const presentIds = new Set(
@@ -182,7 +188,7 @@ export default function DashboardPage() {
             <CardTitle>Registros de Notificaciones de WhatsApp</CardTitle>
           </CardHeader>
           <CardContent>
-            <NotificationsPanel logs={notificationLogs.slice(0, 7)} />
+            <NotificationsPanel logs={notificationLogs ?? []} />
           </CardContent>
         </Card>
       </div>

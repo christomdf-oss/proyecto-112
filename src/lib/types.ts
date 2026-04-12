@@ -19,9 +19,9 @@ export type Attendance = {
 };
 
 export type NotificationLog = {
-  id:string;
+  id?: string;
   studentName: string;
-  eventType: 'entrada' | 'salida';
+  eventType: 'entrada' | 'salida' | 'justificacion' | 'permiso';
   timestamp: Date;
   status: 'success' | 'failed';
   reason?: string;

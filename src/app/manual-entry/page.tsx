@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import type { Student, Attendance } from '@/lib/types';
+import type { Student, Attendance, NotificationLog } from '@/lib/types';
 import { Search, PlusCircle, FileText, Phone } from 'lucide-react';
 import { ManualEntryForm } from './manual-entry-form';
 import { useToast } from '@/hooks/use-toast';
@@ -156,31 +156,33 @@ export default function ManualEntryPage() {
 
     try {
       console.log("Objeto a guardar:", newAttendanceRecord);
-      console.log("Colección de destino: 'asistencias'");
       const attendanceCollection = collection(firestore, 'asistencias');
-      
-      const savePromise = addDoc(attendanceCollection, newAttendanceRecord);
-      
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
-      );
+      await addDoc(attendanceCollection, newAttendanceRecord);
 
-      const docRef = await Promise.race([savePromise, timeoutPromise]);
-      
-      console.log("¡Registro manual guardado con éxito! Documento ID:", (docRef as any).id);
-      window.alert("¡Registro manual guardado con éxito!");
+      let toastDescription = `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`;
+
+      // Si es entrada o salida, simular notificación
+      if (data.type === 'entrada' || data.type === 'salida') {
+        const newNotificationLog: Omit<NotificationLog, 'id'> = {
+          studentName: selectedStudent.nombre,
+          eventType: data.type,
+          timestamp: new Date(),
+          status: 'success',
+        };
+        await addDoc(collection(firestore, 'notificationLogs'), newNotificationLog);
+        console.log("Notificación (simulada) registrada para:", selectedStudent.nombre);
+        toastDescription += " Notificación al tutor enviada (simulación)."
+      }
 
       toast({
           title: "Registro Manual Exitoso",
-          description: `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`,
+          description: toastDescription,
       });
+
       setSelectedStudent(null);
       handleClearSearch();
     } catch (error: any) {
-      const errorMessage = error.message.includes("Tiempo de espera agotado") 
-        ? "Error: Tiempo de espera agotado"
-        : `Error al guardar registro manual: ${error.message}`;
-        
+      const errorMessage = `Error al guardar registro manual: ${error.message}`;
       console.error("Error detallado al agregar registro manual:", error);
       window.alert(errorMessage);
     }

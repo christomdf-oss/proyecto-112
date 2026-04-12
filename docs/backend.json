@@ -65,6 +65,37 @@
         }
       },
       "required": ["studentId", "studentName", "timestamp", "type"]
+    },
+    "notificationLog": {
+      "title": "Notification Log",
+      "description": "Represents a log of a sent notification.",
+      "type": "object",
+      "properties": {
+        "studentName": {
+          "type": "string",
+          "description": "The name of the student for the notification."
+        },
+        "eventType": {
+          "type": "string",
+          "enum": ["entrada", "salida"],
+          "description": "The type of event that triggered the notification."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the notification was sent."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "failed"],
+          "description": "The status of the notification."
+        },
+        "reason": {
+          "type": "string",
+          "description": "The reason for a failed notification."
+        }
+      },
+      "required": ["studentName", "eventType", "timestamp", "status"]
     }
   },
   "auth": {
@@ -82,6 +113,12 @@
         "$ref": "#/entities/attendance"
       },
       "description": "Stores all attendance records for all students."
+    },
+    "/notificationLogs/{logId}": {
+      "schema": {
+        "$ref": "#/entities/notificationLog"
+      },
+      "description": "Stores logs of sent WhatsApp notifications."
     }
   }
 }
