@@ -169,7 +169,7 @@ export default function ManualEntryPage() {
           studentName: selectedStudent.nombre,
           tutorPhone: selectedStudent.telefono_tutor,
           eventType: data.type,
-          timestamp: new Date(),
+          timestamp: data.timestamp,
           status: 'pendiente',
         };
         await addDoc(collection(firestore, 'whatsapp_queue'), newQueueItem);
