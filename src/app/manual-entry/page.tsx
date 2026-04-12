@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { Student, Attendance, NotificationLog } from '@/lib/types';
-import { Search, PlusCircle, FileText, Phone } from 'lucide-react';
+import { Search, PlusCircle, FileText, Phone, Trash2 } from 'lucide-react';
 import { ManualEntryForm } from './manual-entry-form';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,7 +15,17 @@ import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useFirestore } from '@/firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 type BadgeVariant = 'success' | 'destructive' | 'secondary' | 'outline' | 'default';
@@ -45,6 +55,7 @@ export default function ManualEntryPage() {
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   const [searchPerformed, setSearchPerformed] = React.useState(false);
+  const [recordToDelete, setRecordToDelete] = React.useState<Attendance | null>(null);
   const { toast } = useToast();
   
   const today = new Date();
@@ -129,19 +140,8 @@ export default function ManualEntryPage() {
   }
 
   const handleManualEntrySubmit = async (data: { type: Attendance['type'], timestamp: Date, reason?: string }) => {
-    console.log("Intentando guardar registro manual... Datos recibidos:", data);
-
-    if (!selectedStudent) {
-        const errorMsg = "Error: No hay ningún alumno seleccionado.";
-        console.error(errorMsg);
-        alert(errorMsg);
-        return;
-    }
-
-    if (!firestore) {
-      const errorMsg = "Error de Conexión: La instancia de Firestore no está disponible.";
-      console.error(errorMsg);
-      alert(errorMsg);
+    if (!selectedStudent || !firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo guardar el registro.' });
       return;
     }
 
@@ -155,9 +155,12 @@ export default function ManualEntryPage() {
     };
 
     try {
-      console.log("Objeto a guardar:", newAttendanceRecord);
       const attendanceCollection = collection(firestore, 'asistencias');
-      await addDoc(attendanceCollection, newAttendanceRecord);
+      const docRef = await addDoc(attendanceCollection, newAttendanceRecord);
+
+      // Add new record to local state for immediate UI update
+      const newLocalRecord = { id: docRef.id, ...newAttendanceRecord } as Attendance;
+      setAttendanceData(prevData => [newLocalRecord, ...prevData].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime()));
 
       let toastDescription = `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`;
 
@@ -170,7 +173,6 @@ export default function ManualEntryPage() {
           status: 'success',
         };
         await addDoc(collection(firestore, 'notificationLogs'), newNotificationLog);
-        console.log("Notificación (simulada) registrada para:", selectedStudent.nombre);
         toastDescription += " Notificación al tutor enviada (simulación)."
       }
 
@@ -182,9 +184,33 @@ export default function ManualEntryPage() {
       setSelectedStudent(null);
       handleClearSearch();
     } catch (error: any) {
-      const errorMessage = `Error al guardar registro manual: ${error.message}`;
-      console.error("Error detallado al agregar registro manual:", error);
-      window.alert(errorMessage);
+      toast({ variant: 'destructive', title: 'Error al guardar', description: `Ocurrió un error: ${error.message}` });
+    }
+  };
+  
+  const confirmDeleteManualRecord = async () => {
+    if (!firestore || !recordToDelete) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo identificar el registro a eliminar.' });
+      setRecordToDelete(null);
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(firestore, 'asistencias', recordToDelete.id));
+      
+      toast({
+        variant: "destructive",
+        title: 'Registro Eliminado',
+        description: `El registro manual para ${recordToDelete.studentName} ha sido eliminado.`,
+      });
+
+      setAttendanceData(prev => prev.filter(a => a.id !== recordToDelete.id));
+      
+    } catch (e: any) {
+      console.error("Error al eliminar registro manual:", e);
+      toast({ variant: 'destructive', title: 'Error al eliminar', description: `Ocurrió un error: ${e.message}` });
+    } finally {
+      setRecordToDelete(null);
     }
   };
 
@@ -318,7 +344,7 @@ export default function ManualEntryPage() {
                 <CardHeader>
                     <CardTitle>Justificaciones y Registros Manuales</CardTitle>
                      <CardDescription>
-                        Estos son los registros que se han añadido manually el día de hoy.
+                        Estos son los registros que se han añadido manualmente el día de hoy.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="max-h-[60vh] overflow-y-auto">
@@ -327,13 +353,13 @@ export default function ManualEntryPage() {
                             {manualEntriesToday.map((item) => {
                               const badgeProps = getBadgeProps(item.type);
                               return (
-                                <div key={item.id} className="flex items-start gap-4 p-3 rounded-md border">
+                                <div key={item.id} className="flex items-center gap-4 p-3 rounded-md border">
                                     <Avatar className="h-9 w-9 border">
                                     <AvatarFallback>
                                         {item.studentName.split(' ').map((n) => n[0]).join('')}
                                     </AvatarFallback>
                                     </Avatar>
-                                    <div className="grid gap-1.5 w-full">
+                                    <div className="grid gap-1.5 w-full flex-1">
                                         <div className="flex justify-between items-center">
                                             <p className="text-sm font-medium leading-none">{item.studentName}</p>
                                             <Badge variant={badgeProps.variant} className="capitalize">
@@ -348,6 +374,10 @@ export default function ManualEntryPage() {
                                             </div>
                                         )}
                                     </div>
+                                    <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:bg-destructive/10 h-8 w-8" onClick={() => setRecordToDelete(item)}>
+                                        <span className="sr-only">Eliminar registro</span>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </div>
                               );
                             })}
@@ -361,6 +391,23 @@ export default function ManualEntryPage() {
             </Card>
         </TabsContent>
       </Tabs>
+      
+      <AlertDialog open={!!recordToDelete} onOpenChange={(open) => !open && setRecordToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás realmente seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el registro manual de tipo <strong className="capitalize">{recordToDelete?.type}</strong> para <strong>{recordToDelete?.studentName}</strong> del día {recordToDelete && format(recordToDelete.timestamp, "d 'de' MMMM", { locale: es })}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setRecordToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteManualRecord} className="bg-destructive hover:bg-destructive/90">
+              Sí, eliminar registro
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
