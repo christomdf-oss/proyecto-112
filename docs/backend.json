@@ -94,7 +94,16 @@
         },
         "status": {
           "type": "string",
-          "enum": ["pendiente", "enviado"]
+          "enum": ["pendiente", "enviado", "error"]
+        },
+        "sentAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the message was processed by the local bridge."
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if the sending failed."
         }
       },
       "required": ["studentId", "studentName", "tutorPhone", "eventType", "timestamp", "status"]
@@ -120,7 +129,7 @@
       "schema": {
         "$ref": "#/entities/whatsappQueueItem"
       },
-      "description": "Stores pending WhatsApp notifications to be sent manually."
+      "description": "Stores pending WhatsApp notifications to be processed by a local bridge."
     }
   }
 }

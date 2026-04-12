@@ -12,7 +12,7 @@ import {
   LayoutDashboard,
   Users,
   History,
-  MessageSquare,
+  Wifi,
   FileText,
   PenSquare,
 } from 'lucide-react';
@@ -29,7 +29,7 @@ const AppSidebar = () => {
     { href: '/attendance', label: 'Asistencia', icon: History },
     { href: '/reports', label: 'Reportes', icon: FileText },
     { href: '/manual-entry', label: 'Registro Manual', icon: PenSquare },
-    { href: '/whatsapp', label: 'WhatsApp Pendientes', icon: MessageSquare },
+    { href: '/whatsapp', label: 'Estado de WhatsApp', icon: Wifi },
   ];
 
   return (

@@ -25,7 +25,9 @@ export type WhatsappQueueItem = {
   tutorPhone: string;
   eventType: 'entrada' | 'salida';
   timestamp: Date;
-  status: 'pendiente' | 'enviado';
+  status: 'pendiente' | 'enviado' | 'error';
+  sentAt?: Date;
+  error?: string;
 };
 
 export type ProcessedAttendance = {

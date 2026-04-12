@@ -3,119 +3,85 @@
 import * as React from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
+import StatCard from '@/components/dashboard/stat-card';
 import { DataTable } from './data-table';
 import { getColumns } from './columns';
 import type { WhatsappQueueItem } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
-import {
-  doc,
-  updateDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-} from 'firebase/firestore';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useCollection } from '@/firebase';
+import { MessagesSquare, Send, AlertTriangle } from 'lucide-react';
+import { isAfter, subHours } from 'date-fns';
 
-export default function WhatsappQueuePage() {
-  const firestore = useFirestore();
-  const { toast } = useToast();
-  const [pendingItems, setPendingItems] = React.useState<WhatsappQueueItem[]>([]);
-  const [loading, setLoading] = React.useState(true);
+export default function WhatsappStatusPage() {
+  // Fetch all items from the last 24 hours for monitoring
+  const { data: queueItems, loading } = useCollection<WhatsappQueueItem>('whatsapp_queue');
 
-  // Fetch data manually instead of using a real-time listener
-  React.useEffect(() => {
-    if (!firestore) return;
-
-    const fetchQueue = async () => {
-      setLoading(true);
-      try {
-        // Simplified query without orderBy to avoid needing a composite index
-        const q = query(
-          collection(firestore, 'whatsapp_queue'),
-          where('status', '==', 'pendiente')
-        );
-        const querySnapshot = await getDocs(q);
-        const items = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          // Convert timestamps
-          for (const key in data) {
-            if (data[key] && typeof data[key].toDate === 'function') {
-              data[key] = data[key].toDate();
-            }
-          }
-          return { id: doc.id, ...data } as WhatsappQueueItem;
-        });
-
-        // Sort items on the client-side by timestamp, ascending
-        items.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-        setPendingItems(items);
-      } catch (error: any) {
-        console.error('Error fetching whatsapp queue:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error al cargar mensajes',
-          description: `No se pudo obtener la cola de mensajes: ${error.message}`,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchQueue();
-  }, [firestore, toast]);
-
-  const handleSend = async (item: WhatsappQueueItem) => {
-    const cleanedPhone = item.tutorPhone.replace(/[\s-()]/g, '');
-    const message = `COBACAM P10: El alumno ${
-      item.studentName
-    } registró su ${item.eventType} a las ${format(item.timestamp, 'p', {
-      locale: es,
-    })}.`;
-    const url = `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(
-      message
-    )}`;
-
-    window.open(url, '_blank');
-
-    if (firestore) {
-      try {
-        const itemRef = doc(firestore, 'whatsapp_queue', item.id);
-        await updateDoc(itemRef, { status: 'enviado' });
-
-        // Update local state to remove the item from the list instantly
-        setPendingItems((prevItems) => prevItems.filter((i) => i.id !== item.id));
-
-        toast({
-          title: 'Marcado como enviado',
-          description: `El mensaje para ${item.studentName} se ha marcado como enviado.`,
-        });
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Error al actualizar',
-          description: `No se pudo marcar como enviado: ${error.message}`,
-        });
-      }
+  const { pendingCount, sentCount, errorCount, recentItems } = React.useMemo(() => {
+    if (!queueItems) {
+      return { pendingCount: 0, sentCount: 0, errorCount: 0, recentItems: [] };
     }
-  };
+    const last24Hours = subHours(new Date(), 24);
+    
+    let pending = 0;
+    let sent = 0;
+    let errors = 0;
 
-  const columns = getColumns({ onSend: handleSend });
+    const recent = queueItems.filter(item => {
+        const isRecent = isAfter(item.timestamp, last24Hours);
+        if (item.status === 'pendiente') {
+            pending++;
+        }
+        if (isRecent) {
+            if(item.status === 'enviado') sent++;
+            if(item.status === 'error') errors++;
+        }
+        return isRecent;
+    });
+
+    recent.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+    return { 
+        pendingCount: pending, 
+        sentCount: sent, 
+        errorCount: errors, 
+        recentItems: recent.slice(0, 50) // Show last 50 items in the log
+    };
+  }, [queueItems]);
+
+
+  const columns = getColumns();
 
   return (
     <div className="container mx-auto py-2">
       <PageHeader
-        title="Cola de Notificaciones WhatsApp"
-        description="Mensajes pendientes de enviar a los tutores."
+        title="Estado de Conexión de WhatsApp"
+        description="Panel de monitoreo para el servicio de envío de notificaciones."
       />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+        <StatCard
+          title="Mensajes Pendientes"
+          value={pendingCount}
+          icon={MessagesSquare}
+          description="Notificaciones esperando ser procesadas."
+        />
+        <StatCard
+          title="Enviados (24h)"
+          value={sentCount}
+          icon={Send}
+          description="Mensajes enviados exitosamente."
+        />
+        <StatCard
+          title="Errores (24h)"
+          value={errorCount}
+          icon={AlertTriangle}
+          description="Notificaciones que fallaron al enviar."
+        />
+      </div>
       <Card>
         <CardContent className="pt-6">
+          <h3 className="text-lg font-semibold mb-4">Registro de Actividad (Últimas 24 horas)</h3>
           <DataTable
             columns={columns}
-            data={pendingItems}
+            data={recentItems}
             isLoading={loading}
           />
         </CardContent>
