@@ -15,7 +15,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
 } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -33,10 +32,10 @@ export default function WhatsappQueuePage() {
     const fetchQueue = async () => {
       setLoading(true);
       try {
+        // Simplified query without orderBy to avoid needing a composite index
         const q = query(
           collection(firestore, 'whatsapp_queue'),
-          where('status', '==', 'pendiente'),
-          orderBy('timestamp', 'asc')
+          where('status', '==', 'pendiente')
         );
         const querySnapshot = await getDocs(q);
         const items = querySnapshot.docs.map((doc) => {
@@ -49,6 +48,10 @@ export default function WhatsappQueuePage() {
           }
           return { id: doc.id, ...data } as WhatsappQueueItem;
         });
+
+        // Sort items on the client-side by timestamp, ascending
+        items.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
         setPendingItems(items);
       } catch (error: any) {
         console.error('Error fetching whatsapp queue:', error);
