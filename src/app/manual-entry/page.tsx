@@ -15,7 +15,7 @@ import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 
 type BadgeVariant = 'success' | 'destructive' | 'secondary' | 'outline' | 'default';
@@ -36,7 +36,7 @@ const getBadgeProps = (type: Attendance['type']): { variant: BadgeVariant, text:
 }
 
 export default function ManualEntryPage() {
-  const { data: allStudents } = useCollection<Student>('students');
+  const [allStudents, setAllStudents] = React.useState<Student[]>([]);
   const { data: attendanceData } = useCollection<Attendance>('asistencias');
   const firestore = useFirestore();
 
@@ -44,9 +44,42 @@ export default function ManualEntryPage() {
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   const [searchPerformed, setSearchPerformed] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
   
   const today = new Date();
+
+  const fetchStudents = React.useCallback(async () => {
+    if (!firestore) return;
+    setLoading(true);
+    try {
+        const querySnapshot = await getDocs(collection(firestore, "students"));
+        const studentsData = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            // Filter out incomplete documents
+            if (!data.matricula || !data.nombre) {
+                return null;
+            }
+            return {
+                id: doc.id,
+                ...data
+            } as Student;
+        }).filter((student): student is Student => student !== null);
+        setAllStudents(studentsData);
+    } catch (error: any) {
+        console.error("Error cargando alumnos: ", error);
+        toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: `No se pudieron cargar los datos: ${error.message}` });
+    } finally {
+        setLoading(false);
+    }
+  }, [firestore, toast]);
+
+  React.useEffect(() => {
+    if(firestore) {
+      fetchStudents();
+    }
+  }, [firestore, fetchStudents]);
+
 
   // Logic for Ausentes Hoy
   const absentToday = React.useMemo(() => {
@@ -132,8 +165,8 @@ export default function ManualEntryPage() {
 
       const docRef = await Promise.race([savePromise, timeoutPromise]);
       
-      console.log("¡Registro manual guardado con éxito! Documento ID:", docRef.id);
-      alert("¡Registro manual guardado con éxito!");
+      console.log("¡Registro manual guardado con éxito! Documento ID:", (docRef as any).id);
+      window.alert("¡Registro manual guardado con éxito!");
 
       toast({
           title: "Registro Manual Exitoso",
@@ -191,9 +224,9 @@ export default function ManualEntryPage() {
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button onClick={handleSearch} className="w-full sm:w-auto">
+            <Button onClick={handleSearch} className="w-full sm:w-auto" disabled={loading}>
                 <Search className="mr-2 h-4 w-4" />
-                Buscar
+                {loading ? 'Cargando...' : 'Buscar'}
             </Button>
             {(searchPerformed || filters.name || filters.matricula) && <Button onClick={handleClearSearch} variant="outline">Limpiar</Button>}
           </div>

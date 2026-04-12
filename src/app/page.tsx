@@ -31,23 +31,27 @@ export default function DashboardPage() {
     // We check for isClient to avoid hydration errors, and attendance to make sure data is loaded.
     if (!isClient || !attendance) return;
 
-    const todayString = new Date().toDateString();
-    
-    const todaysAttendance = attendance.filter(a => a.timestamp.toDateString() === todayString);
-    setEventsToday(todaysAttendance.length);
+    try {
+      const todayString = new Date().toDateString();
+      
+      const todaysAttendance = attendance.filter(a => a.timestamp && a.timestamp.toDateString() === todayString);
+      setEventsToday(todaysAttendance.length);
 
-    const presentIds = new Set(
-      todaysAttendance
-        .filter(a => a.type === 'entrada')
-        .map(a => a.studentId)
-    );
-    setPresentToday(presentIds.size);
+      const presentIds = new Set(
+        todaysAttendance
+          .filter(a => a.type === 'entrada')
+          .map(a => a.studentId)
+      );
+      setPresentToday(presentIds.size);
 
-    // The notification logs are currently empty. This will result in 0.
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-    const recentNotifications = notificationLogs.filter(log => log.timestamp > twentyFourHoursAgo);
-    setNotificationsLast24h(recentNotifications.length);
+      // The notification logs are currently empty. This will result in 0.
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+      const recentNotifications = notificationLogs.filter(log => log.timestamp > twentyFourHoursAgo);
+      setNotificationsLast24h(recentNotifications.length);
+    } catch (error) {
+      console.error("Dashboard calculation error:", error);
+    }
 
   }, [attendance, notificationLogs, isClient]);
   
