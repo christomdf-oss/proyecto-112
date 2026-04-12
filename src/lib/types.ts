@@ -18,13 +18,14 @@ export type Attendance = {
   reason?: string;
 };
 
-export type NotificationLog = {
-  id?: string;
+export type WhatsappQueueItem = {
+  id: string;
+  studentId: string;
   studentName: string;
-  eventType: 'entrada' | 'salida' | 'justificacion' | 'permiso';
+  tutorPhone: string;
+  eventType: 'entrada' | 'salida';
   timestamp: Date;
-  status: 'success' | 'failed';
-  reason?: string;
+  status: 'pendiente' | 'enviado';
 };
 
 export type ProcessedAttendance = {

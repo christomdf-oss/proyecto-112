@@ -7,13 +7,12 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
   Users,
   History,
-  Settings,
+  MessageSquare,
   FileText,
   PenSquare,
 } from 'lucide-react';
@@ -30,6 +29,7 @@ const AppSidebar = () => {
     { href: '/attendance', label: 'Asistencia', icon: History },
     { href: '/reports', label: 'Reportes', icon: FileText },
     { href: '/manual-entry', label: 'Registro Manual', icon: PenSquare },
+    { href: '/whatsapp', label: 'WhatsApp Pendientes', icon: MessageSquare },
   ];
 
   return (
@@ -69,23 +69,6 @@ const AppSidebar = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <Separator />
-      <SidebarFooter className='h-16'>
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === '/settings'}
-                  tooltip={{ children: 'Configuración', side: 'right' }}
-                >
-                  <Link href="/settings">
-                    <Settings />
-                    <span>Configuración</span>
-                  </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 };

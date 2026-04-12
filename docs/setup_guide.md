@@ -13,7 +13,7 @@ Esta guía proporciona los pasos técnicos para configurar los componentes de ba
 3.  [Configuración del Backend en Raspberry Pi](#3-configuración-del-backend-en-raspberry-pi)
     *   [3.1. Obtener Credenciales de Firebase](#31-obtener-credenciales-de-firebase)
     *   [3.2. Script de Python para Captura de Asistencia](#32-script-de-python-para-captura-de-asistencia)
-4.  [Próximos Pasos: Notificaciones de WhatsApp](#4-próximos-pasos-notificaciones-de-whatsapp)
+4.  [Sistema de Notificaciones por WhatsApp](#4-sistema-de-notificaciones-por-whatsapp)
 
 ---
 
@@ -23,7 +23,7 @@ El sistema se compone de tres partes principales:
 
 *   **Aplicación Web (Frontend):** La interfaz de Next.js que estás viendo. Sirve como un panel de control para visualizar y gestionar los datos.
 *   **Base de Datos (Firestore):** El cerebro del sistema. Almacena toda la información de alumnos y sus registros de asistencia.
-*   **Script de Captura (Backend):** Un script de Python que se ejecuta en una Raspberry Pi. Este se conecta al lector de huellas y a Firestore para registrar las asistencias en tiempo real.
+*   **Script de Captura (Backend):** Un script de Python que se ejecuta en una Raspberry Pi. Este se conecta al lector de huellas y a Firestore para registrar las asistencias en tiempo real y encolar las notificaciones de WhatsApp.
 
 ## 2. Configuración de Firebase Firestore
 
@@ -33,16 +33,16 @@ Si aún no lo has hecho, crea un nuevo proyecto en la [Consola de Firebase](http
 
 ### 2.2. Estructura de la Base de Datos
 
-Tu base de datos en Firestore tendrá dos colecciones principales:
+Tu base de datos en Firestore tendrá tres colecciones principales:
 
-*   `alumnos`: Cada documento en esta colección representa a un estudiante. El ID del documento debe ser la **matrícula** del alumno.
-    *   **Ejemplo de documento en `alumnos`:**
+*   `students`: Cada documento en esta colección representa a un estudiante. El ID del documento debe ser la **matrícula** del alumno.
+    *   **Ejemplo de documento en `students`:**
         ```json
         {
             "nombre": "Juan Pérez",
             "grupo": "301",
             "comunidad": "CHICBUL",
-            "telefono_tutor": "+529811234567",
+            "telefono_tutor": "5219811234567", // Formato E.164 recomendado
             "fingerprintId": 123 // ID numérico que devuelve tu lector de huellas
         }
         ```
@@ -54,6 +54,18 @@ Tu base de datos en Firestore tendrá dos colecciones principales:
             "studentName": "Juan Pérez",
             "timestamp": December 10, 2023 at 7:30:00 AM UTC-6, // Tipo de dato Timestamp
             "type": "entrada" // o "salida"
+        }
+        ```
+*   `whatsapp_queue`: Cada documento es una notificación pendiente para ser enviada manualmente.
+    *   **Ejemplo de documento en `whatsapp_queue`:**
+        ```json
+        {
+            "studentId": "243011001",
+            "studentName": "Juan Pérez",
+            "tutorPhone": "5219811234567",
+            "eventType": "entrada",
+            "timestamp": December 10, 2023 at 7:30:00 AM UTC-6,
+            "status": "pendiente" // o "enviado"
         }
         ```
 
@@ -70,18 +82,11 @@ service cloud.firestore {
     // El SDK de Python `firebase-admin` utiliza una cuenta de servicio que tiene
     // privilegios de administrador y omite las reglas de seguridad por defecto.
     
-    // Permitir acceso de lectura PÚBLICO para la aplicación web.
-    // En un entorno de producción real, se recomienda restringir esto a usuarios autenticados.
-    // ej. `allow read: if request.auth != null;`
+    // En un entorno de producción real, se recomienda restringir el acceso
+    // a solo usuarios autenticados. Ej. `allow read, write: if request.auth != null;`
     
-    match /alumnos/{alumnoId} {
-      allow read: if true;
-      allow write: if false; // Solo el backend puede escribir
-    }
-    
-    match /asistencias/{asistenciaId} {
-      allow read: if true;
-      allow write: if false; // Solo el backend puede escribir
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
@@ -152,7 +157,7 @@ print("Conexión con Firebase establecida.")
 # --- LÓGICA PRINCIPAL ---
 def get_student_by_fingerprint(finger_id):
     """Busca un alumno en Firestore usando el ID de su huella."""
-    students_ref = db.collection('alumnos')
+    students_ref = db.collection('students')
     # Hacemos una consulta para encontrar el doc. donde el campo 'fingerprintId' coincida.
     query = students_ref.where('fingerprintId', '==', finger_id).limit(1).stream()
     
@@ -179,14 +184,29 @@ def get_last_attendance(student_id):
 
 def register_attendance(student_data, student_id, record_type):
     """Registra un nuevo evento de entrada o salida en Firestore."""
+    current_time = datetime.datetime.now()
+    
     new_record = {
         'studentId': student_id,
         'studentName': student_data['nombre'],
-        'timestamp': datetime.datetime.now(),
+        'timestamp': current_time,
         'type': record_type
     }
     db.collection('asistencias').add(new_record)
     print(f"ÉXITO: Registro de '{record_type}' para {student_data['nombre']}.")
+
+    # Añadir a la cola de notificaciones de WhatsApp
+    if record_type in ['entrada', 'salida']:
+        whatsapp_record = {
+            'studentId': student_id,
+            'studentName': student_data['nombre'],
+            'tutorPhone': student_data['telefono_tutor'],
+            'eventType': record_type,
+            'timestamp': current_time,
+            'status': 'pendiente'
+        }
+        db.collection('whatsapp_queue').add(whatsapp_record)
+        print(f"INFO: Se añadió un mensaje a la cola de WhatsApp para {student_data['nombre']}.")
 
 
 # Bucle principal del programa
@@ -218,15 +238,16 @@ while True:
 
 ```
 
-## 4. Próximos Pasos: Notificaciones de WhatsApp
+## 4. Sistema de Notificaciones por WhatsApp
 
-Enviar notificaciones de WhatsApp requiere un servicio de terceros y un backend que reaccione a los eventos de la base de datos.
+El sistema utiliza un enfoque **semi-manual** para el envío de notificaciones de WhatsApp, lo que elimina los costos asociados a APIs de terceros y reduce el riesgo de bloqueos.
 
-*   **Servicio de API de WhatsApp:** Necesitarás una cuenta en un proveedor como **Twilio**. Ellos te darán una API para enviar mensajes de WhatsApp mediante programación.
-*   **Firebase Cloud Functions:** Son pequeños fragmentos de código que se ejecutan en la nube en respuesta a eventos. La estrategia ideal es:
-    1.  Crear una Cloud Function que se **active (`trigger`)** cada vez que se crea un nuevo documento en la colección `asistencias`.
-    2.  Dentro de la función, leer los datos del nuevo registro de asistencia (el `studentId`, `type`, `timestamp`).
-    3.  Con el `studentId`, consultar la colección `alumnos` para obtener el `telefono_tutor`.
-    4.  Usar la API de Twilio (o el servicio que elijas) para enviar un mensaje de WhatsApp al tutor, informándole de la entrada o salida de su hijo/a.
+*   **¿Cómo funciona?**
+    1.  Cuando un alumno registra una entrada o salida (a través del lector de huellas o manualmente), el sistema automáticamente crea un registro en la colección `whatsapp_queue` de la base de datos con el estado "pendiente".
+    2.  El personal administrativo accede a la nueva página **"WhatsApp Pendientes"** en la aplicación web.
+    3.  Esta página muestra una lista de todos los mensajes pendientes de enviar.
+    4.  Al presionar el botón **"Enviar WhatsApp"** en un registro, se abre una ventana nueva de `wa.me` con el número del tutor y el mensaje ya pre-escrito.
+    5.  El administrador solo necesita hacer clic en "Enviar" en la página de WhatsApp.
+    6.  El sistema marca automáticamente el registro como "enviado" y lo elimina de la lista de pendientes.
 
-Esto es un paso más avanzado, y te recomiendo implementarlo una vez que el sistema principal de registro de asistencia esté funcionando correctamente.
+Este método combina la automatización de la creación de mensajes con el control manual del envío, proporcionando una solución eficiente y sin costo.

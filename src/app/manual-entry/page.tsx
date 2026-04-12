@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import type { Student, Attendance, NotificationLog } from '@/lib/types';
+import type { Student, Attendance } from '@/lib/types';
 import { Search, PlusCircle, FileText, Phone, Trash2 } from 'lucide-react';
 import { ManualEntryForm } from './manual-entry-form';
 import { useToast } from '@/hooks/use-toast';
@@ -158,22 +158,22 @@ export default function ManualEntryPage() {
       const attendanceCollection = collection(firestore, 'asistencias');
       const docRef = await addDoc(attendanceCollection, newAttendanceRecord);
 
-      // Add new record to local state for immediate UI update
       const newLocalRecord = { id: docRef.id, ...newAttendanceRecord } as Attendance;
       setAttendanceData(prevData => [newLocalRecord, ...prevData].sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime()));
 
       let toastDescription = `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`;
 
-      // Si es entrada o salida, simular notificación
       if (data.type === 'entrada' || data.type === 'salida') {
-        const newNotificationLog: Omit<NotificationLog, 'id'> = {
+        const newQueueItem = {
+          studentId: selectedStudent.matricula,
           studentName: selectedStudent.nombre,
+          tutorPhone: selectedStudent.telefono_tutor,
           eventType: data.type,
           timestamp: new Date(),
-          status: 'success',
+          status: 'pendiente',
         };
-        await addDoc(collection(firestore, 'notificationLogs'), newNotificationLog);
-        toastDescription += " Notificación al tutor enviada (simulación)."
+        await addDoc(collection(firestore, 'whatsapp_queue'), newQueueItem);
+        toastDescription += " Mensaje añadido a la cola de WhatsApp."
       }
 
       toast({

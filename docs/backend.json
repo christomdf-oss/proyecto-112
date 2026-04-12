@@ -66,36 +66,38 @@
       },
       "required": ["studentId", "studentName", "timestamp", "type"]
     },
-    "notificationLog": {
-      "title": "Notification Log",
-      "description": "Represents a log of a sent notification.",
+    "whatsappQueueItem": {
+      "title": "WhatsApp Queue Item",
+      "description": "Represents a pending WhatsApp notification.",
       "type": "object",
       "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "The ID of the student."
+        },
         "studentName": {
           "type": "string",
-          "description": "The name of the student for the notification."
+          "description": "The name of the student."
+        },
+        "tutorPhone": {
+          "type": "string",
+          "description": "The guardian's phone number."
         },
         "eventType": {
           "type": "string",
-          "enum": ["entrada", "salida"],
-          "description": "The type of event that triggered the notification."
+          "enum": ["entrada", "salida"]
         },
         "timestamp": {
           "type": "string",
           "format": "date-time",
-          "description": "When the notification was sent."
+          "description": "The time of the attendance event."
         },
         "status": {
           "type": "string",
-          "enum": ["success", "failed"],
-          "description": "The status of the notification."
-        },
-        "reason": {
-          "type": "string",
-          "description": "The reason for a failed notification."
+          "enum": ["pendiente", "enviado"]
         }
       },
-      "required": ["studentName", "eventType", "timestamp", "status"]
+      "required": ["studentId", "studentName", "tutorPhone", "eventType", "timestamp", "status"]
     }
   },
   "auth": {
@@ -114,11 +116,11 @@
       },
       "description": "Stores all attendance records for all students."
     },
-    "/notificationLogs/{logId}": {
+    "/whatsapp_queue/{queueId}": {
       "schema": {
-        "$ref": "#/entities/notificationLog"
+        "$ref": "#/entities/whatsappQueueItem"
       },
-      "description": "Stores logs of sent WhatsApp notifications."
+      "description": "Stores pending WhatsApp notifications to be sent manually."
     }
   }
 }

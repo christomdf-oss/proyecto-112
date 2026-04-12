@@ -11,9 +11,8 @@ A continuación, se presenta un resumen de todas las funcionalidades implementad
 ### 1. Panel de Control (`/`)
 
 Es la página principal y ofrece una vista general del estado diario del plantel.
-- **Tarjetas de Estadísticas:** Muestra indicadores clave como el número total de alumnos registrados, los alumnos presentes hoy, el total de eventos de entrada/salida del día y las notificaciones enviadas en las últimas 24 horas.
+- **Tarjetas de Estadísticas:** Muestra indicadores clave como el número total de alumnos registrados, los alumnos presentes hoy y el total de eventos de entrada/salida del día.
 - **Registro en Vivo:** Un feed que muestra los últimos 10 eventos de asistencia (entradas y salidas) en tiempo real.
-- **Últimas Notificaciones:** Un panel que registra el estado de las notificaciones de WhatsApp enviadas a los tutores, indicando si fueron exitosas o fallidas.
 
 ### 2. Gestión de Alumnos (`/students`)
 
@@ -54,6 +53,13 @@ Módulo diseñado para manejar todas las excepciones y situaciones especiales de
     - **Registrar Permiso:** Para salidas temporales que no deben contar como una salida oficial (ej. ir a la papelería).
 - **Registro de Motivo:** Todos los registros manuales requieren una justificación, asegurando que cada excepción quede documentada.
 
+### 6. WhatsApp Pendientes (`/whatsapp`)
+
+Este módulo centraliza el envío de notificaciones a tutores de una manera semi-manual, optimizando costos y control.
+- **Cola de Mensajes Pendientes:** Muestra una lista en tiempo real de todas las notificaciones de entrada y salida que están listas para ser enviadas.
+- **Botón "Enviar WhatsApp":** Cada registro tiene un botón que, al ser presionado, abre una nueva ventana de WhatsApp en el navegador con el número del tutor y un mensaje pre-escrito, listo para ser enviado con un solo clic.
+- **Actualización de Estado:** Una vez que se presiona el botón, el registro se marca como "enviado" y desaparece de la lista de pendientes, manteniendo la interfaz limpia y organizada.
+
 ---
 
 ## Arquitectura y Conexión con Backend
@@ -65,6 +71,7 @@ El sistema está diseñado con una arquitectura cliente-servidor desacoplada, ut
 *   **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en una Raspberry Pi conectada a un lector de huellas. Este script es responsable de:
     1.  Leer la huella dactilar.
     2.  Identificar al alumno en la base de datos.
-    3.  Registrar el evento de entrada o salida directamente en Firestore.
+    3.  Registrar el evento de asistencia en Firestore.
+    4.  Añadir un registro a la cola de notificaciones de WhatsApp.
 
 Este diseño permite que la aplicación web y el dispositivo de captura operen de manera independiente, comunicándose solo a través de la base de datos.
