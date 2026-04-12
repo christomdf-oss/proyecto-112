@@ -9,13 +9,13 @@ import NotificationsPanel from '@/components/dashboard/notifications-panel';
 import type { Student, Attendance, NotificationLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection } from '@/firebase';
-import { getNotificationLogs } from '@/lib/data';
-
 
 export default function DashboardPage() {
   const { data: students, loading: studentsLoading } = useCollection<Student>('students');
   const { data: attendance, loading: attendanceLoading } = useCollection<Attendance>('asistencias');
-  const [notificationLogs, setNotificationLogs] = React.useState<NotificationLog[]>([]);
+  // The notification system is not yet connected to a real backend.
+  // It defaults to an empty array to prevent crashing.
+  const [notificationLogs] = React.useState<NotificationLog[]>([]);
   const [isClient, setIsClient] = React.useState(false);
 
   const [presentToday, setPresentToday] = React.useState(0);
@@ -24,13 +24,12 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     // This effect runs only on the client, after the component has mounted.
-    // For now, notification logs are still coming from mock data.
-    setNotificationLogs(getNotificationLogs());
     setIsClient(true);
   }, []);
 
   React.useEffect(() => {
-    if (!isClient || !attendance || !notificationLogs) return;
+    // We check for isClient to avoid hydration errors, and attendance to make sure data is loaded.
+    if (!isClient || !attendance) return;
 
     const todayString = new Date().toDateString();
     
@@ -44,6 +43,7 @@ export default function DashboardPage() {
     );
     setPresentToday(presentIds.size);
 
+    // The notification logs are currently empty. This will result in 0.
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
     const recentNotifications = notificationLogs.filter(log => log.timestamp > twentyFourHoursAgo);
