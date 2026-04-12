@@ -17,7 +17,7 @@ Es la página principal y ofrece una vista general del estado diario del plantel
 ### 2. Gestión de Alumnos (`/students`)
 
 Este módulo permite administrar el catálogo completo de estudiantes.
-- **Registro de Alumnos:** Un formulario para añadir nuevos alumnos, solicitando datos como nombre completo, matrícula, teléfono del tutor, grupo y comunidad de origen.
+- **Registro de Alumnos:** Un formulario para añadir nuevos alumnos, solicitando datos como nombre completo, matrícula, correo y teléfono del tutor, grupo y comunidad de origen.
 - **Tabla de Alumnos:** Una vista completa de todos los estudiantes con filtros por nombre y grupo.
 - **Estado de Huella Dactilar:** Una columna visual indica si la huella de un alumno está "Registrada" o "Pendiente".
 - **Registro de Huella Interactivo:** Para los alumnos con huella "Pendiente", se puede iniciar un proceso de registro a través de una ventana emergente que simula la captura y confirma el registro exitoso en tiempo real, actualizando el estado en la tabla sin necesidad de recargar.
@@ -53,25 +53,22 @@ Módulo diseñado para manejar todas las excepciones y situaciones especiales de
     - **Registrar Permiso:** Para salidas temporales que no deben contar como una salida oficial (ej. ir a la papelería).
 - **Registro de Motivo:** Todos los registros manuales requieren una justificación, asegurando que cada excepción quede documentada.
 
-### 6. WhatsApp Pendientes (`/whatsapp`)
+### 6. Notificaciones por Correo (`/settings`)
 
-Este módulo centraliza el envío de notificaciones a tutores de una manera semi-manual, optimizando costos y control.
-- **Cola de Mensajes Pendientes:** Muestra una lista en tiempo real de todas las notificaciones de entrada y salida que están listas para ser enviadas.
-- **Botón "Enviar WhatsApp":** Cada registro tiene un botón que, al ser presionado, abre una nueva ventana de WhatsApp en el navegador con el número del tutor y un mensaje pre-escrito, listo para ser enviado con un solo clic.
-- **Actualización de Estado:** Una vez que se presiona el botón, el registro se marca como "enviado" y desaparece de la lista de pendientes, manteniendo la interfaz limpia y organizada.
+Este módulo gestiona la comunicación automática con los tutores a través de correo electrónico.
+- **Envío Automático:** Cada vez que se registra una entrada o salida (manual o biométrica), el sistema envía una notificación por correo electrónico al tutor.
+- **Integración Profesional:** Utiliza servicios de envío de correo como Resend o SendGrid para garantizar una alta tasa de entrega y fiabilidad.
+- **Configuración Centralizada:** Una página de "Configuración" permite a los administradores introducir las claves de API necesarias para activar el servicio de envío.
 
 ---
 
 ## Arquitectura y Conexión con Backend
 
-El sistema está diseñado con una arquitectura cliente-servidor desacoplada, utilizando Firebase como intermediario.
+El sistema está diseñado con una arquitectura cliente-servidor desacoplada.
 
-*   **Aplicación Web (Next.js):** Es la interfaz de administración que estás utilizando. Se encarga de leer los datos de la base de datos para mostrar los reportes y el estado del plantel.
+*   **Aplicación Web (Next.js):** Es la interfaz de administración que estás utilizando. Se encarga de leer los datos de la base de datos, gestionar la información y activar el envío de notificaciones.
 *   **Base de Datos (Google Firestore):** Es la base de datos en la nube donde se almacenan todos los datos (alumnos, asistencias). Sirve como única fuente de verdad.
-*   **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en una Raspberry Pi conectada a un lector de huellas. Este script es responsable de:
-    1.  Leer la huella dactilar.
-    2.  Identificar al alumno en la base de datos.
-    3.  Registrar el evento de asistencia en Firestore.
-    4.  Añadir un registro a la cola de notificaciones de WhatsApp.
+*   **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en una Raspberry Pi conectada a un lector de huellas. Este script es responsable de leer la huella, identificar al alumno y registrar el evento de asistencia en Firestore.
+*   **Servicio de Correo (Resend/SendGrid):** Un servicio externo que se integra con la aplicación para gestionar el envío masivo de correos de manera fiable.
 
-Este diseño permite que la aplicación web y el dispositivo de captura operen de manera independiente, comunicándose solo a través de la base de datos.
+Este diseño permite que la aplicación web y el dispositivo de captura operen de manera independiente, comunicándose solo a través de la base de datos y los servicios en la nube.

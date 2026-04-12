@@ -32,7 +32,7 @@ Este informe está diseñado para servir como una guía de referencia tanto para
     *   [2.3. Historial de Asistencia](#23-historial-de-asistencia)
     *   [2.4. Consulta de Reportes](#24-consulta-de-reportes)
     *   [2.5. Registro Manual](#25-registro-manual)
-    *   [2.6. WhatsApp Pendientes](#26-whatsapp-pendientes)
+    *   [2.6. Notificaciones por Correo](#26-notificaciones-por-correo)
 3.  [Conclusión](#3-conclusión)
 4.  [Anexo: Estructura del Código Fuente](#4-anexo-estructura-del-código-fuente)
 
@@ -49,7 +49,7 @@ El objetivo principal de este proyecto es ofrecer una plataforma web centralizad
 *   **Facilitar la administración** del catálogo de alumnos.
 *   **Generar reportes de asistencia** detallados y exportables (diarios, mensuales e individuales).
 *   **Gestionar excepciones** como justificaciones, permisos y registros manuales de forma documentada.
-*   **Optimizar la comunicación** con los tutores mediante un sistema de notificaciones semi-manual.
+*   **Optimizar la comunicación** con los tutores mediante notificaciones automáticas por correo electrónico.
 
 Este sistema está construido con tecnologías web modernas, asegurando una experiencia de usuario fluida, segura y escalable.
 
@@ -59,9 +59,9 @@ El sistema se basa en una arquitectura de tres componentes principales que traba
 
 1.  **Aplicación Web (Frontend):** Desarrollada en Next.js, esta es la interfaz principal para los administradores. Su función es visualizar datos, generar reportes, gestionar la información de los alumnos y facilitar el envío de notificaciones.
 
-2.  **Base de Datos en la Nube (Google Firestore):** Actúa como el cerebro y la única fuente de verdad del sistema. Almacena de forma segura y centralizada las colecciones de `students`, `asistencias` y `whatsapp_queue`.
+2.  **Base de Datos en la Nube (Google Firestore):** Actúa como el cerebro y la única fuente de verdad del sistema. Almacena de forma segura y centralizada las colecciones de `students` y `asistencias`.
 
-3.  **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en un dispositivo físico (Raspberry Pi) en el plantel. Este script está conectado a un lector de huellas dactilares y es el único componente con permisos para escribir en la base de datos. Su responsabilidad es capturar la huella, identificar al alumno, registrar el evento de asistencia y añadir la notificación a la cola de WhatsApp.
+3.  **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en un dispositivo físico (Raspberry Pi) en el plantel. Este script está conectado a un lector de huellas dactilares y es el único componente con permisos para escribir en la base de datos. Su responsabilidad es capturar la huella, identificar al alumno y registrar el evento de asistencia.
 
 Esta arquitectura desacoplada garantiza que cada componente tenga una única responsabilidad, haciendo el sistema más robusto, seguro y escalable.
 
@@ -87,7 +87,7 @@ Este módulo es el catálogo digital de todos los estudiantes del plantel.
 *   **Propósito:** Centralizar la información de los alumnos y gestionar el estado de su registro biométrico.
 *   **Funcionalidades Clave:**
     *   **Tabla de Alumnos:** Muestra una lista completa de los estudiantes con su nombre, matrícula, grupo, comunidad y teléfono del tutor. Incluye filtros para buscar por nombre y grupo.
-    *   **Registro de Nuevos Alumnos:** Un formulario emergente permite añadir nuevos estudiantes al sistema.
+    *   **Registro de Nuevos Alumnos:** Un formulario emergente permite añadir nuevos estudiantes al sistema, incluyendo su correo de tutor.
     *   **Gestión de Huella Dactilar:** Una columna indica visualmente si la huella de un alumno está "Registrada" o "Pendiente".
 
 ### 2.3. Historial de Asistencia
@@ -120,15 +120,15 @@ Diseñado para gestionar las excepciones y casos especiales del día a día.
     *   **Búsqueda de Alumno:** Permite buscar a cualquier estudiante para añadirle un registro.
     *   **Formulario Flexible:** Permite crear registros de "Entrada/Salida Manual", "Justificar Ausencia" y "Registrar Permiso".
 
-### 2.6. WhatsApp Pendientes
+### 2.6. Notificaciones por Correo
 
-Un módulo diseñado para gestionar el envío de notificaciones a tutores de forma económica y controlada.
+Un módulo diseñado para la comunicación automática y fiable con los tutores.
 
-*   **Propósito:** Centralizar y facilitar el envío de avisos de entrada/salida a través de WhatsApp Web.
+*   **Propósito:** Enviar notificaciones por correo electrónico de forma automática cada vez que un alumno registra una entrada o salida.
 *   **Funcionalidades Clave:**
-    *   **Cola de Mensajes:** Muestra una lista de todos los mensajes que están listos para ser enviados, generados automáticamente con cada entrada o salida.
-    *   **Botón de Envío Rápido:** Un botón "Enviar WhatsApp" por cada registro abre una ventana con el número del tutor y el mensaje ya preparado.
-    *   **Gestión de Estado:** Al presionar el botón, el registro se marca como "enviado" y desaparece de la lista, asegurando que solo los mensajes pendientes sean visibles.
+    *   **Envío Asíncrono:** Al crear un registro de asistencia manual, el correo se envía en segundo plano sin afectar la experiencia del usuario.
+    *   **Integración con Servicios Profesionales:** Preparado para usar Resend, un servicio de envío de correos robusto.
+    *   **Página de Configuración:** Permite a los administradores gestionar las claves de API necesarias para el servicio de envío.
 
 ---
 
@@ -166,10 +166,9 @@ El código fuente completo del proyecto está organizado en la estructura de car
 *   **Módulo: Registro Manual**
     *   `src/app/manual-entry/page.tsx`
 
-*   **Módulo: WhatsApp Pendientes**
-    *   `src/app/whatsapp/page.tsx`
-    *   `src/app/whatsapp/columns.tsx`
-    *   `src/app/whatsapp/data-table.tsx`
+*   **Módulo: Configuración**
+    *   `src/app/settings/page.tsx`
+    *   `src/lib/email.ts`
 
 *   **Tipos y Utilerías**
     *   `src/lib/types.ts`

@@ -34,6 +34,7 @@ const studentSchema = z.object({
   nombre: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
   matricula: z.string().min(1, { message: 'La matrícula es obligatoria.' }),
   telefono_tutor: z.string().min(10, { message: 'El teléfono debe tener al menos 10 caracteres.' }),
+  correo_tutor: z.string().email({ message: 'Por favor ingresa un correo válido.' }),
   grupo: z.string().min(3, { message: 'Por favor ingresa un grupo.' }),
   comunidad: z.string({ required_error: 'Por favor selecciona una comunidad.' }).min(1, { message: 'Por favor selecciona una comunidad.' }),
 });
@@ -56,6 +57,7 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
         nombre: '',
         matricula: '',
         telefono_tutor: '',
+        correo_tutor: '',
         grupo: '',
         comunidad: '',
     },
@@ -121,19 +123,34 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="telefono_tutor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teléfono del Tutor</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej. 55 1234 5678" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="telefono_tutor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono del Tutor</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej. 55 1234 5678" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="correo_tutor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Correo del Tutor</FormLabel>
+                      <FormControl>
+                        <Input placeholder="tutor@ejemplo.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="grupo"

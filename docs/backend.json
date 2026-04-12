@@ -17,6 +17,11 @@
           "type": "string",
           "description": "The guardian's phone number."
         },
+        "correo_tutor": {
+          "type": "string",
+          "format": "email",
+          "description": "The guardian's email address."
+        },
         "grupo": {
           "type": "string",
           "description": "The student's group or class."
@@ -30,7 +35,7 @@
           "description": "Whether the student's fingerprint is registered."
         }
       },
-      "required": ["matricula", "nombre", "telefono_tutor", "grupo", "comunidad"]
+      "required": ["matricula", "nombre", "telefono_tutor", "correo_tutor", "grupo", "comunidad"]
     },
     "attendance": {
       "title": "Attendance",
@@ -65,48 +70,6 @@
         }
       },
       "required": ["studentId", "studentName", "timestamp", "type"]
-    },
-    "whatsappQueueItem": {
-      "title": "WhatsApp Queue Item",
-      "description": "Represents a pending WhatsApp notification.",
-      "type": "object",
-      "properties": {
-        "studentId": {
-          "type": "string",
-          "description": "The ID of the student."
-        },
-        "studentName": {
-          "type": "string",
-          "description": "The name of the student."
-        },
-        "tutorPhone": {
-          "type": "string",
-          "description": "The guardian's phone number."
-        },
-        "eventType": {
-          "type": "string",
-          "enum": ["entrada", "salida"]
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The time of the attendance event."
-        },
-        "status": {
-          "type": "string",
-          "enum": ["pendiente", "enviado", "error"]
-        },
-        "sentAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the message was processed by the local bridge."
-        },
-        "error": {
-          "type": "string",
-          "description": "Error message if the sending failed."
-        }
-      },
-      "required": ["studentId", "studentName", "tutorPhone", "eventType", "timestamp", "status"]
     }
   },
   "auth": {
@@ -124,12 +87,6 @@
         "$ref": "#/entities/attendance"
       },
       "description": "Stores all attendance records for all students."
-    },
-    "/whatsapp_queue/{queueId}": {
-      "schema": {
-        "$ref": "#/entities/whatsappQueueItem"
-      },
-      "description": "Stores pending WhatsApp notifications to be processed by a local bridge."
     }
   }
 }

@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useFirestore } from '@/firebase';
 import { collection, addDoc, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { sendAttendanceEmail } from '@/lib/email';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -163,17 +164,18 @@ export default function ManualEntryPage() {
 
       let toastDescription = `Se agregó un registro de tipo '${data.type}' para ${selectedStudent.nombre}.`;
 
-      if (data.type === 'entrada' || data.type === 'salida') {
-        const newQueueItem = {
-          studentId: selectedStudent.matricula,
+      if ((data.type === 'entrada' || data.type === 'salida') && selectedStudent.correo_tutor) {
+        // Fire-and-forget email sending
+        sendAttendanceEmail({
+          to: selectedStudent.correo_tutor,
           studentName: selectedStudent.nombre,
-          tutorPhone: selectedStudent.telefono_tutor,
           eventType: data.type,
-          timestamp: data.timestamp,
-          status: 'pendiente',
-        };
-        await addDoc(collection(firestore, 'whatsapp_queue'), newQueueItem);
-        toastDescription += " Mensaje añadido a la cola de WhatsApp."
+          eventTimestamp: data.timestamp,
+        });
+        
+        toastDescription += " Se está enviando una notificación por correo.";
+      } else if ((data.type === 'entrada' || data.type === 'salida') && !selectedStudent.correo_tutor) {
+          toastDescription += " No se envió correo (tutor sin email registrado).";
       }
 
       toast({

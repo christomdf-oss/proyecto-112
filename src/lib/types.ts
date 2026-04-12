@@ -3,6 +3,7 @@ export type Student = {
   matricula: string;
   nombre: string;
   telefono_tutor: string;
+  correo_tutor: string;
   grupo: string;
   comunidad: string;
   fingerprintRegistered?: boolean;
@@ -16,18 +17,6 @@ export type Attendance = {
   type: 'entrada' | 'salida' | 'justificacion' | 'permiso';
   isManual?: boolean;
   reason?: string;
-};
-
-export type WhatsappQueueItem = {
-  id: string;
-  studentId: string;
-  studentName: string;
-  tutorPhone: string;
-  eventType: 'entrada' | 'salida';
-  timestamp: Date;
-  status: 'pendiente' | 'enviado' | 'error';
-  sentAt?: Date;
-  error?: string;
 };
 
 export type ProcessedAttendance = {
