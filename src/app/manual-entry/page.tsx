@@ -15,7 +15,7 @@ import { es } from 'date-fns/locale';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 
 
 type BadgeVariant = 'success' | 'destructive' | 'secondary' | 'outline' | 'default';
@@ -36,50 +36,18 @@ const getBadgeProps = (type: Attendance['type']): { variant: BadgeVariant, text:
 }
 
 export default function ManualEntryPage() {
-  const [allStudents, setAllStudents] = React.useState<Student[]>([]);
-  const { data: attendanceData } = useCollection<Attendance>('asistencias');
+  const { data: allStudents, loading: studentsLoading } = useCollection<Student>('students');
+  const { data: attendanceData, loading: attendanceLoading } = useCollection<Attendance>('asistencias');
   const firestore = useFirestore();
 
   const [filters, setFilters] = React.useState({ name: '', matricula: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   const [searchPerformed, setSearchPerformed] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
   
   const today = new Date();
-
-  const fetchStudents = React.useCallback(async () => {
-    if (!firestore) return;
-    setLoading(true);
-    try {
-        const querySnapshot = await getDocs(collection(firestore, "students"));
-        const studentsData = querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            // Filter out incomplete documents
-            if (!data.matricula || !data.nombre) {
-                return null;
-            }
-            return {
-                id: doc.id,
-                ...data
-            } as Student;
-        }).filter((student): student is Student => student !== null);
-        setAllStudents(studentsData);
-    } catch (error: any) {
-        console.error("Error cargando alumnos: ", error);
-        toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: `No se pudieron cargar los datos: ${error.message}` });
-    } finally {
-        setLoading(false);
-    }
-  }, [firestore, toast]);
-
-  React.useEffect(() => {
-    if(firestore) {
-      fetchStudents();
-    }
-  }, [firestore, fetchStudents]);
-
+  const loading = studentsLoading || attendanceLoading;
 
   // Logic for Ausentes Hoy
   const absentToday = React.useMemo(() => {

@@ -16,46 +16,33 @@ export default function DashboardPage() {
   // The notification system is not yet connected to a real backend.
   // It defaults to an empty array to prevent crashing.
   const [notificationLogs] = React.useState<NotificationLog[]>([]);
-  const [isClient, setIsClient] = React.useState(false);
 
-  const [presentToday, setPresentToday] = React.useState(0);
-  const [eventsToday, setEventsToday] = React.useState(0);
-  const [notificationsLast24h, setNotificationsLast24h] = React.useState(0);
-
-  React.useEffect(() => {
-    // This effect runs only on the client, after the component has mounted.
-    setIsClient(true);
-  }, []);
-
-  React.useEffect(() => {
-    // We check for isClient to avoid hydration errors, and attendance to make sure data is loaded.
-    if (!isClient || !attendance) return;
-
-    try {
-      const todayString = new Date().toDateString();
-      
-      const todaysAttendance = attendance.filter(a => a.timestamp && a.timestamp.toDateString() === todayString);
-      setEventsToday(todaysAttendance.length);
-
-      const presentIds = new Set(
-        todaysAttendance
-          .filter(a => a.type === 'entrada')
-          .map(a => a.studentId)
-      );
-      setPresentToday(presentIds.size);
-
-      // The notification logs are currently empty. This will result in 0.
-      const now = new Date();
-      const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-      const recentNotifications = notificationLogs.filter(log => log.timestamp > twentyFourHoursAgo);
-      setNotificationsLast24h(recentNotifications.length);
-    } catch (error) {
-      console.error("Dashboard calculation error:", error);
+  const { presentToday, eventsToday, notificationsLast24h } = React.useMemo(() => {
+    if (!attendance) {
+      return { presentToday: 0, eventsToday: 0, notificationsLast24h: 0 };
     }
 
-  }, [attendance, notificationLogs, isClient]);
+    const todayString = new Date().toDateString();
+    
+    const todaysAttendance = attendance.filter(a => a.timestamp && a.timestamp.toDateString() === todayString);
+    const eventsToday = todaysAttendance.length;
+
+    const presentIds = new Set(
+      todaysAttendance
+        .filter(a => a.type === 'entrada')
+        .map(a => a.studentId)
+    );
+    const presentToday = presentIds.size;
+
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+    const recentNotifications = notificationLogs.filter(log => log.timestamp > twentyFourHoursAgo);
+    const notificationsLast24h = recentNotifications.length;
+
+    return { presentToday, eventsToday, notificationsLast24h };
+  }, [attendance, notificationLogs]);
   
-  const loading = studentsLoading || attendanceLoading || !isClient;
+  const loading = studentsLoading || attendanceLoading;
 
   const StatCardSkeleton = () => (
     <Card>
