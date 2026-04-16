@@ -8,16 +8,54 @@ import { Button } from '@/components/ui/button';
 import type { Student, Attendance } from '@/lib/types';
 import { StudentReportCard } from './student-report-card';
 import { Search } from 'lucide-react';
-import { useCollection } from '@/firebase';
+import { useFirestore } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ReportsPage() {
-  const { data: allStudents } = useCollection<Student>('students');
-  const { data: allAttendance } = useCollection<Attendance>('asistencias');
+  const firestore = useFirestore();
+  const [allStudents, setAllStudents] = React.useState<Student[]>([]);
+  const [allAttendance, setAllAttendance] = React.useState<Attendance[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   const [filters, setFilters] = React.useState({ name: '', group: '', matricula: '', comunidad: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   const [searchPerformed, setSearchPerformed] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!firestore) return;
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const studentsQuery = await getDocs(collection(firestore, 'students'));
+            const studentsList = studentsQuery.docs.map(doc => {
+                 const data = doc.data();
+                 if (!data.matricula || !data.nombre) return null; // Filter out bad data
+                 return { id: doc.id, ...data } as Student;
+            }).filter((s): s is Student => s !== null);
+            setAllStudents(studentsList);
+
+            const attendanceQuery = await getDocs(collection(firestore, 'asistencias'));
+            const attendanceList = attendanceQuery.docs.map(doc => {
+                 const data = doc.data();
+                 for (const key in data) {
+                     if (data[key] && typeof data[key].toDate === 'function') {
+                         data[key] = data[key].toDate();
+                     }
+                 }
+                 return { id: doc.id, ...data } as Attendance;
+            });
+            setAllAttendance(attendanceList);
+        } catch (error) {
+            console.error("Error fetching reports data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchData();
+  }, [firestore]);
+
 
   const handleSearch = () => {
     setSelectedStudent(null);
@@ -27,8 +65,7 @@ export default function ReportsPage() {
         return;
     }
 
-    const currentStudents = allStudents ?? [];
-    let filtered = currentStudents;
+    let filtered = allStudents;
     if (filters.matricula) {
       filtered = filtered.filter(s => s.matricula.toLowerCase().includes(filters.matricula.toLowerCase()));
     }
@@ -56,9 +93,36 @@ export default function ReportsPage() {
     return (
         <StudentReportCard 
             student={selectedStudent} 
-            attendance={allAttendance ?? []} 
+            attendance={allAttendance} 
             onBack={() => setSelectedStudent(null)} 
         />
+    )
+  }
+
+  if (loading) {
+    return (
+       <div className="container mx-auto py-2">
+        <PageHeader
+          title="Consulta de Reportes"
+          description="Busca un alumno por nombre, grupo o matrícula para ver su reporte."
+        />
+        <Card>
+            <CardContent className="pt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+                   <Skeleton className="h-10 w-full" />
+                   <Skeleton className="h-10 w-full" />
+                   <Skeleton className="h-10 w-full" />
+                   <Skeleton className="h-10 w-full" />
+                </div>
+                 <div className="flex justify-end gap-2 mb-6">
+                    <Skeleton className="h-10 w-28" />
+                </div>
+                <div className="text-center text-muted-foreground py-10">
+                    <p>Cargando datos...</p>
+                </div>
+            </CardContent>
+        </Card>
+      </div>
     )
   }
 

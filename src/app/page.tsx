@@ -16,8 +16,11 @@ export default function DashboardPage() {
   const [students, setStudents] = React.useState<Student[] | null>(null);
   const [attendance, setAttendance] = React.useState<Attendance[] | null>(null);
   const [loading, setLoading] = React.useState(true);
-  
+  const [today, setToday] = React.useState<Date | null>(null); // New state for today
+
   React.useEffect(() => {
+    setToday(new Date()); // Set on client mount to fix hydration
+
     if (!firestore) return;
 
     const fetchData = async () => {
@@ -51,11 +54,11 @@ export default function DashboardPage() {
 
 
   const { presentToday, eventsToday } = React.useMemo(() => {
-    if (!attendance) {
+    if (!attendance || !today) { // Check for today
       return { presentToday: 0, eventsToday: 0 };
     }
     
-    const todaysAttendance = attendance.filter(a => a.timestamp && isSameDay(a.timestamp, new Date()));
+    const todaysAttendance = attendance.filter(a => a.timestamp && isSameDay(a.timestamp, today)); // use today
     const eventsToday = todaysAttendance.length;
 
     const presentIds = new Set(
@@ -66,7 +69,7 @@ export default function DashboardPage() {
     const presentToday = presentIds.size;
 
     return { presentToday, eventsToday };
-  }, [attendance]);
+  }, [attendance, today]); // add today to dependencies
   
   const StatCardSkeleton = () => (
     <Card>
@@ -81,7 +84,7 @@ export default function DashboardPage() {
     </Card>
   )
 
-  if (loading) {
+  if (loading || !today) { // Check for !today
      return (
         <div className="flex flex-col gap-6">
             <div className="grid gap-4 md:grid-cols-3">
