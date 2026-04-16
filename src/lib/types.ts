@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export type Student = {
   id?: string;
   matricula: string;
@@ -26,3 +28,12 @@ export type ProcessedAttendance = {
   entrada: Date | null;
   salida: Date | null;
 };
+
+export const AttendanceEmailInputSchema = z.object({
+  to: z.string().email(),
+  studentName: z.string(),
+  eventType: z.enum(['entrada', 'salida']),
+  eventTimestamp: z.date(),
+});
+
+export type AttendanceEmailInput = z.infer<typeof AttendanceEmailInputSchema>;

@@ -2,21 +2,11 @@
 /**
  * @fileOverview A server action for sending emails using Resend.
  * - sendAttendanceEmail - A server action that sends a notification email to a tutor.
- * - AttendanceEmailInput - The input type for the sendAttendanceEmail function.
  */
-import { z } from 'zod';
 import { Resend } from 'resend';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-export const AttendanceEmailInputSchema = z.object({
-  to: z.string().email(),
-  studentName: z.string(),
-  eventType: z.enum(['entrada', 'salida']),
-  eventTimestamp: z.date(),
-});
-
-export type AttendanceEmailInput = z.infer<typeof AttendanceEmailInputSchema>;
+import type { AttendanceEmailInput } from '@/lib/types';
 
 export async function sendAttendanceEmail(input: AttendanceEmailInput) {
   if (!process.env.RESEND_API_KEY) {
