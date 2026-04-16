@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 type BadgeVariant = 'success' | 'destructive' | 'secondary' | 'outline' | 'default';
@@ -59,9 +60,12 @@ export default function ManualEntryPage() {
   const [recordToDelete, setRecordToDelete] = React.useState<Attendance | null>(null);
   const { toast } = useToast();
   
-  const today = new Date();
+  const [today, setToday] = React.useState<Date | null>(null);
   
   React.useEffect(() => {
+    // Set date on client to avoid hydration mismatch
+    setToday(new Date());
+
     if (!firestore) return;
 
     const fetchData = async () => {
@@ -97,7 +101,7 @@ export default function ManualEntryPage() {
 
   // Logic for Ausentes Hoy
   const absentToday = React.useMemo(() => {
-    if (!attendanceData || !allStudents) return [];
+    if (!attendanceData || !allStudents || !today) return [];
     const todaysAttendance = attendanceData.filter((a) =>
       isSameDay(a.timestamp, today) && a.type === 'entrada'
     );
@@ -107,7 +111,7 @@ export default function ManualEntryPage() {
 
   // Logic for Registros Manuales del Día
   const manualEntriesToday = React.useMemo(() => {
-    if (!attendanceData) return [];
+    if (!attendanceData || !today) return [];
      return attendanceData.filter(
       (a) => isSameDay(a.timestamp, today) && a.isManual
     ).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -299,19 +303,32 @@ export default function ManualEntryPage() {
 
       <Tabs defaultValue="ausentes" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="ausentes">Alumnos Ausentes Hoy ({absentToday.length})</TabsTrigger>
-                <TabsTrigger value="justificados">Registros Manuales de Hoy ({manualEntriesToday.length})</TabsTrigger>
+                <TabsTrigger value="ausentes">Alumnos Ausentes Hoy ({!today ? '...' : absentToday.length})</TabsTrigger>
+                <TabsTrigger value="justificados">Registros Manuales de Hoy ({!today ? '...' : manualEntriesToday.length})</TabsTrigger>
             </TabsList>
         <TabsContent value="ausentes">
             <Card>
                 <CardHeader>
                     <CardTitle>Alumnos Sin Registro de Entrada</CardTitle>
                     <CardDescription>
-                        Esta es la lista de alumnos que no han registrado su entrada el día de hoy, {format(today, "d 'de' MMMM", { locale: es })}.
+                        Esta es la lista de alumnos que no han registrado su entrada el día de hoy, {today ? format(today, "d 'de' MMMM", { locale: es }) : "..."}.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="max-h-[60vh] overflow-y-auto">
-                     {absentToday.length > 0 ? (
+                     {loading || !today ? (
+                        <div className="space-y-4">
+                            {Array.from({length: 3}).map((_, i) => (
+                                <div key={i} className="flex items-center gap-4 p-2 rounded-md border">
+                                    <Skeleton className="h-9 w-9 rounded-full" />
+                                    <div className="grid gap-1.5 flex-1">
+                                        <Skeleton className="h-4 w-40" />
+                                        <Skeleton className="h-3 w-32" />
+                                    </div>
+                                    <Skeleton className="h-8 w-24" />
+                                </div>
+                            ))}
+                        </div>
+                     ) : absentToday.length > 0 ? (
                         <div className="space-y-4">
                             {absentToday.map((student) => (
                             <div key={student.matricula} className="flex items-center gap-4 p-2 rounded-md border">
@@ -350,7 +367,20 @@ export default function ManualEntryPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="max-h-[60vh] overflow-y-auto">
-                     {manualEntriesToday.length > 0 ? (
+                     {loading || !today ? (
+                        <div className="space-y-4">
+                            {Array.from({length: 2}).map((_, i) => (
+                                <div key={i} className="flex items-center gap-4 p-3 rounded-md border">
+                                    <Skeleton className="h-9 w-9 rounded-full" />
+                                    <div className="grid gap-1.5 flex-1">
+                                        <Skeleton className="h-4 w-40" />
+                                        <Skeleton className="h-3 w-48" />
+                                    </div>
+                                    <Skeleton className="h-8 w-8" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : manualEntriesToday.length > 0 ? (
                         <div className="space-y-4">
                             {manualEntriesToday.map((item) => {
                               const badgeProps = getBadgeProps(item.type);
@@ -399,7 +429,7 @@ export default function ManualEntryPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás realmente seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Esto eliminará permanentemente el registro manual de tipo <strong className="capitalize">{recordToDelete?.type}</strong> para <strong>{recordToDelete?.studentName}</strong> del día {recordToDelete && format(recordToDelete.timestamp, "d 'de' MMMM", { locale: es })}.
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el registro manual de tipo <strong className="capitalize">{recordToDelete?.type}</strong> para <strong>{recordToDelete?.studentName}</strong> del día {recordToDelete && today ? format(recordToDelete.timestamp, "d 'de' MMMM", { locale: es }) : ""}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
