@@ -22,15 +22,22 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useCollection } from '@/firebase';
 import type * as XLSX from 'xlsx';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export default function AttendancePage() {
-  const { data: attendanceData } = useCollection<Attendance>('asistencias');
-  const { data: allStudents } = useCollection<Student>('students');
-  const [selectedDate, setSelectedDate] = React.useState(new Date());
+  const { data: attendanceData, loading: attendanceLoading } = useCollection<Attendance>('asistencias');
+  const { data: allStudents, loading: studentsLoading } = useCollection<Student>('students');
+  const [selectedDate, setSelectedDate] = React.useState<Date>();
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    // Set initial date on the client to avoid hydration mismatch
+    setSelectedDate(new Date());
+  }, []);
+
   const processedAttendance = React.useMemo(() => {
-    if (!attendanceData || !allStudents) return [];
+    if (!attendanceData || !allStudents || !selectedDate) return [];
     // This logic correctly includes manual 'entrada' in the present list.
     const attendanceForSelectedDay = attendanceData.filter((a) =>
       isSameDay(a.timestamp, selectedDate)
@@ -42,6 +49,7 @@ export default function AttendancePage() {
     >();
 
     for (const item of attendanceForSelectedDay) {
+      if (!studentsById.has(item.studentId)) continue; // Ignore records for students who are no longer in the system
       if (!attendanceByStudent.has(item.studentId)) {
         attendanceByStudent.set(item.studentId, {
           entrada: null,
@@ -64,7 +72,7 @@ export default function AttendancePage() {
     const result: ProcessedAttendance[] = [];
     for (const [studentId, times] of attendanceByStudent.entries()) {
       const student = studentsById.get(studentId);
-      if (student) {
+      if (student && times.entrada) { // Only count as present if there's an 'entrada' record.
         result.push({
           studentId,
           studentName: student.nombre,
@@ -80,17 +88,16 @@ export default function AttendancePage() {
   }, [attendanceData, allStudents, selectedDate]);
 
   const absentStudents = React.useMemo(() => {
-    if (!allStudents) return [];
+    if (!allStudents || !selectedDate) return [];
     // An absent student is one who does not have an 'entrada' record.
-    const presentStudentIds = new Set(processedAttendance.filter(pa => pa.entrada).map(a => a.studentId));
-    return allStudents.filter(student => !presentStudentIds.has(student.matricula)).sort((a, b) => a.nombre.localeCompare(b.nombre));
-  }, [allStudents, processedAttendance]);
+    const presentStudentIds = new Set(processedAttendance.map(a => a.studentId));
+    return allStudents.filter(student => student.matricula && !presentStudentIds.has(student.matricula)).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [allStudents, processedAttendance, selectedDate]);
 
-  // NEW: Get justified records for the selected date
   const justifiedRecords = React.useMemo(() => {
-    if (!attendanceData) return [];
+    if (!attendanceData || !selectedDate) return [];
     return attendanceData.filter(
-      (a) => isSameDay(a.timestamp, selectedDate) && a.isManual
+      (a) => a.isManual && isSameDay(a.timestamp, selectedDate)
     ).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [attendanceData, selectedDate]);
 
@@ -100,7 +107,7 @@ export default function AttendancePage() {
   }, [attendanceData]);
 
   const handleExport = async (exportType: 'day' | 'month' | 'absent_day') => {
-    if (!allStudents || !attendanceData) {
+    if (!allStudents || !attendanceData || !selectedDate) {
        toast({
           variant: 'destructive',
           title: 'Datos no cargados',
@@ -220,6 +227,7 @@ export default function AttendancePage() {
       const totalSchoolDays = schoolDaysInMonth.size;
 
       const studentSummaryData = allStudents.map(student => {
+        if (!student.matricula) return null;
         const studentAttendanceInMonth = attendanceForMonth.filter(a => a.studentId === student.matricula);
         const attendedDays = new Set(studentAttendanceInMonth.filter(a => a.type === 'entrada').map(a => a.timestamp.toDateString()));
         
@@ -247,7 +255,7 @@ export default function AttendancePage() {
             '% Asistencia': attendancePercentage, // Kept as number for calculations
             'Entradas Tardías': lateEntries,
         };
-      });
+      }).filter(s => s !== null) as NonNullable<typeof studentSummaryData[0]>[];
       
       const groupAvgAttendance: Record<string, { total: number, count: number }> = {};
       studentSummaryData.forEach(s => {
@@ -282,6 +290,7 @@ export default function AttendancePage() {
       const monthlyData = new Map<string, Map<string, { entrada: Date | null; salida: Date | null }>>();
 
       for (const item of attendanceForMonth) {
+        if (!item.studentId) continue;
         const dayString = item.timestamp.toDateString();
         if (!monthlyData.has(dayString)) {
           monthlyData.set(dayString, new Map());
@@ -347,6 +356,68 @@ export default function AttendancePage() {
       XLSX.writeFile(wb, `reporte_mensual_asistencia_${dateForFilename}.xlsx`);
     }
   };
+
+  if (!selectedDate || attendanceLoading || studentsLoading) {
+    return (
+      <div className="container mx-auto py-2">
+        <PageHeader
+          title="Historial de Asistencia"
+          description="Selecciona una fecha para revisar los registros del día."
+        >
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </PageHeader>
+        <Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+            <div className="md:col-span-1 md:border-r">
+                <div className='p-6'>
+                    <div className="flex flex-row items-center justify-between pb-6">
+                        <Skeleton className="h-7 w-32" />
+                        <div className="flex gap-2">
+                            <Skeleton className="h-10 w-10" />
+                            <Skeleton className="h-10 w-10" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-2 text-center">
+                        {Array.from({ length: 7 }).map((_, i) => (
+                        <div key={i} className="text-sm font-medium text-muted-foreground h-4 w-4 mx-auto">
+                            {['D', 'L', 'M', 'X', 'J', 'V', 'S'][i]}
+                        </div>
+                        ))}
+                        {Array.from({ length: 35 }).map((_, i) => (
+                        <Skeleton key={i} className="h-10 w-10 rounded-full" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div className="md:col-span-2">
+                <div className='p-6'>
+                    <Skeleton className="h-10 w-full mb-6" />
+                    <div className="space-y-6">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="flex items-start gap-4">
+                            <Skeleton className="h-9 w-9 rounded-full" />
+                            <div className="grid gap-1.5 w-full">
+                            <div className="flex justify-between items-center">
+                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-3 w-20" />
+                            </div>
+                            <div className="flex flex-col gap-2 pt-1">
+                                <Skeleton className="h-4 w-40" />
+                                <Skeleton className="h-4 w-40" />
+                            </div>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-2">
