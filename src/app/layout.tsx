@@ -6,6 +6,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/layout/sidebar';
 import Header from '@/components/layout/header';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import AuthProvider from '@/components/auth/AuthProvider';
 
 export const metadata: Metadata = {
   title: 'COBACAM',
@@ -30,14 +31,16 @@ export default function RootLayout({
       <body className={cn('font-body antialiased', 'min-h-screen bg-background font-sans')}>
         <FirebaseClientProvider>
           <SidebarProvider>
-            <AppSidebar />
-            <div className="flex-1 flex flex-col">
-              <Header />
-              <main className="flex-1 p-4 md:p-8 pt-6">
-                {children}
-              </main>
-            </div>
-            <Toaster />
+            <AuthProvider>
+              <AppSidebar />
+              <div className="flex-1 flex flex-col">
+                <Header />
+                <main className="flex-1 p-4 md:p-8 pt-6">
+                  {children}
+                </main>
+              </div>
+              <Toaster />
+            </AuthProvider>
           </SidebarProvider>
         </FirebaseClientProvider>
       </body>
