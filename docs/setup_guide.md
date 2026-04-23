@@ -195,28 +195,45 @@ while True:
 
 ### 3.3. Recomendaciones de Lector de Huellas (Sensor)
 
-La compatibilidad del lector de huellas no depende de la aplicación web, sino de su capacidad para conectarse a la **Raspberry Pi** y ser controlado mediante una **librería de Python**.
+La compatibilidad del lector no depende de la aplicación web, sino de su capacidad para ser controlado por un **script de Python en un sistema Linux** (como una Raspberry Pi). El factor clave es la disponibilidad de **drivers para Linux** y una **librería de Python** que pueda comunicarse con el dispositivo.
 
-A continuación, se presentan algunas opciones populares y bien documentadas que son excelentes para este tipo de proyecto:
+A continuación, se presentan los dos tipos de conexión principales y sus consideraciones.
 
-#### 1. Sensor Adafruit ZFM-20 / GT-521Fxx (Opción Recomendada)
+#### Opción 1: Sensores por GPIO (Conexión Directa)
 
-*   **Descripción:** Este es uno de los sensores más populares en la comunidad de desarrolladores y makers. Es relativamente económico y existe una gran cantidad de tutoriales y librerías para usarlo con Raspberry Pi.
-*   **Conexión:** Generalmente se conecta a través de los pines GPIO (TX/RX), aunque existen adaptadores USB a TTL que facilitan la conexión a un puerto USB.
-*   **Librería de Python:** La librería más común es `pyfingerprint`. Puedes instalarla con `pip install pyfingerprint` y te permite registrar huellas, buscar, eliminar y verificar con facilidad.
-*   **Por qué es una buena opción:** Su popularidad significa que cualquier problema que encuentres, es muy probable que alguien más ya lo haya resuelto y documentado en foros o blogs.
+Esta es la opción más recomendada para empezar, por su gran soporte en la comunidad de *makers*.
 
-#### 2. Lectores Digital Persona U.are.U
+*   **Modelo Sugerido:** Sensores de la serie **Adafruit ZFM / GT-521Fxx**.
+*   **Conexión:** Se conectan directamente a los pines TX/RX (GPIO) de la Raspberry Pi. También se pueden usar con un adaptador USB a TTL si prefieres un puerto USB.
+*   **Librería de Python:** La librería `pyfingerprint` es excelente, fácil de instalar (`pip install pyfingerprint`) y de usar.
+*   **Ventaja Principal:** Es la ruta más documentada y con la que es más probable obtener éxito rápidamente.
 
-*   **Descripción:** Estos son lectores de grado más comercial, conocidos por su fiabilidad y rapidez. Son los que a menudo se ven en entornos de oficina.
-*   **Conexión:** Son directamente USB, lo que simplifica la conexión física.
-*   **Librería de Python:** La integración puede ser un poco más compleja. No siempre hay una librería de `pip` directa. A menudo, se requiere instalar los drivers oficiales para Linux y luego usar una librería de Python que se comunique con esos drivers, como `pyfprint` (una envoltura de `libfprint`).
-*   **Por qué es una buena opción:** Si buscas una solución más robusta y no te intimida la posible configuración de drivers en Linux.
+#### Opción 2: Lectores por USB (Conexión Plug-and-Play)
+
+Esta opción es ideal si buscas una solución más robusta y de aspecto comercial. Los modelos que mencionaste, como el **Zkteco Zk9500** o los lectores de escritorio genéricos, entran en esta categoría.
+
+**El Criterio Más Importante: Compatibilidad con `libfprint`**
+
+Antes de comprar cualquier lector USB, debes verificar su compatibilidad con el proyecto de código abierto **`libfprint`**. Esta es una librería estándar en Linux que da soporte a una gran variedad de lectores de huellas.
+
+**Checklist para Elegir un Lector USB:**
+
+1.  **Busca el modelo en la lista de dispositivos soportados por `libfprint`**. Puedes encontrar la lista en su sitio web oficial. Si tu dispositivo (o su chipset interno) aparece ahí, tienes una excelente probabilidad de que funcione.
+2.  **Verifica la existencia de una librería de Python.** Una vez confirmada la compatibilidad con `libfprint`, busca una librería de Python que se integre con ella, como `pyfprint`.
+
+**Análisis de los modelos que mencionaste:**
+
+*   **Lector De Huellas Dactilares Para Escritorio Usb 360 Degree:** Este es un nombre genérico. Muchos de estos dispositivos usan chipsets compatibles con `libfprint`. La clave es buscar el modelo exacto o el ID del hardware para comprobar su compatibilidad. Son una buena apuesta si investigas primero.
+
+*   **Zkteco Zk9500:** Los lectores de **ZKTeco** son excelentes en hardware, pero su soporte en Linux es **complicado**. A menudo, sus SDKs (kits de desarrollo) son solo para Windows. Aunque existen librerías no oficiales creadas por la comunidad para algunos modelos, pueden ser inestables o difíciles de instalar.
+    *   **Recomendación:** Procede con precaución. A menos que encuentres un tutorial reciente y fiable que garantice el funcionamiento de ese modelo específico en una Raspberry Pi con Python, podría ser un camino frustrante.
+
+*   **Lectores Digital Persona U.are.U:** Al igual que los ZKTeco, son de grado comercial. Sin embargo, muchos de sus modelos **sí tienen buen soporte en `libfprint`**, lo que los convierte en una opción USB mucho más segura y recomendada que los ZKTeco para este proyecto.
 
 **Conclusión de la Recomendación:**
 
-Para empezar y asegurar la compatibilidad más sencilla, te recomiendo encarecidamente buscar un **sensor tipo GT-521F32 o GT-521F52** (o un kit de Adafruit que lo incluya). La disponibilidad de la librería `pyfingerprint` hará que la integración con el script de Python sea mucho más directa.
-
+*   **Ruta Segura y Fácil:** Un sensor tipo **GT-521Fxx** con la librería `pyfingerprint`.
+*   **Ruta USB Robusta:** Un lector de la marca **Digital Persona** (o un genérico) que esté **explícitamente listado como compatible con `libfprint`**. Evita los modelos de ZKTeco a menos que estés preparado para una configuración potencialmente compleja.
 ---
 
 ## 4. Sistema de Notificaciones por Correo Electrónico
@@ -228,4 +245,3 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
     2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
     3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend en el entorno del servidor.
     4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
-
