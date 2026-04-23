@@ -80,6 +80,12 @@ service cloud.firestore {
 
 **Aclaración Importante:** El lector de huellas **no se conecta a la computadora donde administras la página web**. Se conecta a una **Raspberry Pi**, que es una computadora pequeña de bajo costo que debe estar en la escuela. Esta Raspberry Pi utiliza el sistema operativo **Linux**. Por esta razón, la compatibilidad del lector con Linux es el factor más importante.
 
+> **💡 Nota para Pruebas Locales (¡Sin Raspberry Pi!)**
+>
+> ¡No necesitas una Raspberry Pi para empezar a probar! Puedes ejecutar el script de Python de esta sección directamente en tu computadora (Windows, Mac, etc.) para simular el proceso de registro.
+>
+> El script de ejemplo está diseñado para pedirte un "ID de huella" a través del teclado. Esto te permite verificar que la conexión con Firebase es correcta y que los registros de asistencia se guardan como esperas, ¡todo antes de comprar el hardware!
+
 ### 3.1. Obtener Credenciales de Firebase
 
 Tu script de Python necesita un archivo de credenciales para autenticarse de forma segura.
@@ -93,10 +99,11 @@ Tu script de Python necesita un archivo de credenciales para autenticarse de for
 
 Este es un script de ejemplo completo. Deberás adaptarlo para que funcione con la librería específica de tu lector de huellas.
 
-**Instala las librerías necesarias en tu Raspberry Pi:**
+**Instala las librerías necesarias en tu Raspberry Pi (o computadora local):**
 ```bash
+# Instalar Python si no lo tienes: https://www.python.org/downloads/
 pip install firebase-admin
-# También instala la librería para tu lector de huellas
+# También instala la librería para tu lector de huellas (ej. pyfingerprint)
 ```
 
 **Código del script (`main.py`):**
@@ -109,11 +116,13 @@ from firebase_admin import credentials, firestore
 
 def get_fingerprint_id():
     """
-    Función de ejemplo para simular la lectura de una huella.
-    Debe ser reemplazada por el código de tu sensor.
+    Función para simular la lectura de una huella en una PC
+    o para integrar el código de tu sensor en la Raspberry Pi.
     """
     print("Esperando huella...")
     try:
+        # Para pruebas, simplemente se ingresa un ID.
+        # En producción, aquí iría el código que lee el sensor.
         finger_id = int(input("Ingresa ID de huella (ej. 1, 2, 3...): "))
         print(f"Huella leída con ID: {finger_id}")
         return finger_id
@@ -121,10 +130,17 @@ def get_fingerprint_id():
         print("ID no válido. Inténtalo de nuevo.")
         return None
 
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-print("Conexión con Firebase establecida.")
+# --- Inicio del script principal ---
+
+# 1. Conexión con Firebase
+try:
+    cred = credentials.Certificate("serviceAccountKey.json")
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    print("Conexión con Firebase establecida.")
+except Exception as e:
+    print(f"Error al conectar con Firebase: {e}")
+    exit()
 
 def get_student_by_fingerprint(finger_id):
     """Busca un alumno en Firestore usando el ID de su huella."""
@@ -167,9 +183,10 @@ def register_attendance(student_data, student_id, record_type):
     
     # La notificación por correo será gestionada por la aplicación web
     # o una Cloud Function que escuche la colección 'asistencias'.
-    print("INFO: La notificación por correo se procesará en el backend.")
+    print("INFO: La notificación por correo se procesará en el backend web.")
 
 
+# 2. Bucle principal de escucha
 while True:
     finger_id = get_fingerprint_id()
 
@@ -254,5 +271,6 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
     2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
     3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend en el entorno del servidor.
     4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
+
 
 
