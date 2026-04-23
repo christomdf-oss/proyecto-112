@@ -214,9 +214,24 @@ while True:
 
 ### 3.3. Recomendaciones de Lector de Huellas (¡Enfocado en Costo y Compatibilidad!)
 
-¡Tienes toda la razón! Los lectores de huellas comerciales pueden ser muy caros. Afortunadamente, hay opciones mucho más económicas que son perfectas para este proyecto. La compatibilidad no depende de la marca, sino de su capacidad para ser controlado por un **script de Python en tu Raspberry Pi (que usa Linux)**.
+Para que un lector de huellas funcione con este sistema, **NO importa la marca, el precio o la tienda donde lo compres**. Lo único que importa es que cumpla con **DOS** requisitos técnicos para que pueda ser controlado desde el script de Python en la Raspberry Pi (que usa Linux):
 
-Aquí te presento las opciones, ordenadas de la más recomendada (fácil y barata) a la más avanzada.
+1.  **Compatibilidad con el Sistema Operativo (Linux):**
+    *   Para lectores **USB genéricos**, esto significa que el modelo debe aparecer en la lista oficial de dispositivos soportados por el proyecto **`libfprint`**.
+    *   Para sensores tipo **módulo (con pines)**, como el GT-521Fxx, la compatibilidad viene de su conexión serial (TTL), que es universal.
+
+2.  **Compatibilidad con el Lenguaje de Programación (Python):**
+    *   Debe existir una **librería de Python** que permita controlar el lector.
+        *   Para lectores compatibles con `libfprint`, la librería suele ser `pyfprint-next`.
+        *   Para los sensores GT-521Fxx, la librería es `pyfingerprint`.
+
+**En resumen: si encuentras un lector, tu checklist de dos pasos es:**
+1.  ¿Es compatible con `libfprint` (para USB) o es un modelo GT-521Fxx (para módulo)?
+2.  ¿Existe una librería de Python para controlarlo?
+
+Si la respuesta a ambas preguntas es sí, ¡el lector es compatible!
+
+A continuación se presentan las opciones ordenadas de la más recomendada (fácil y barata) a la más avanzada.
 
 #### Opción 1 (Recomendada): El Sensor "Maker" por USB-TTL (La más barata y fiable)
 
@@ -233,10 +248,6 @@ Esta es, por mucho, la mejor ruta para empezar sin gastar mucho y con la segurid
 Si prefieres una solución de una sola pieza que se conecte directamente a USB, es posible encontrar opciones económicas, pero requiere un poco de investigación de tu parte antes de comprar.
 
 > **Advertencia:** No puedo verificar enlaces de productos directamente. Debes seguir estos pasos para confirmar la compatibilidad tú mismo antes de comprar.
-
-**El Criterio Más Importante: Compatibilidad con `libfprint`**
-
-Para que un lector USB genérico funcione en Linux (el sistema de la Raspberry Pi), debe ser compatible con el proyecto **`libfprint`**.
 
 **Checklist para Encontrar un Lector USB Barato:**
 
@@ -271,6 +282,7 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
     2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
     3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend en el entorno del servidor.
     4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
+
 
 
 
