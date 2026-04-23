@@ -13,6 +13,7 @@ Esta guía proporciona los pasos técnicos para configurar los componentes de ba
 3.  [Configuración del Backend en Raspberry Pi](#3-configuración-del-backend-en-raspberry-pi)
     *   [3.1. Obtener Credenciales de Firebase](#31-obtener-credenciales-de-firebase)
     *   [3.2. Script de Python para Captura de Asistencia](#32-script-de-python-para-captura-de-asistencia)
+    *   [3.3. Recomendaciones de Lector de Huellas (Sensor)](#33-recomendaciones-de-lector-de-huellas-sensor)
 4.  [Sistema de Notificaciones por Correo Electrónico](#4-sistema-de-notificaciones-por-correo-electrónico)
 
 ---
@@ -192,6 +193,32 @@ while True:
 
 ```
 
+### 3.3. Recomendaciones de Lector de Huellas (Sensor)
+
+La compatibilidad del lector de huellas no depende de la aplicación web, sino de su capacidad para conectarse a la **Raspberry Pi** y ser controlado mediante una **librería de Python**.
+
+A continuación, se presentan algunas opciones populares y bien documentadas que son excelentes para este tipo de proyecto:
+
+#### 1. Sensor Adafruit ZFM-20 / GT-521Fxx (Opción Recomendada)
+
+*   **Descripción:** Este es uno de los sensores más populares en la comunidad de desarrolladores y makers. Es relativamente económico y existe una gran cantidad de tutoriales y librerías para usarlo con Raspberry Pi.
+*   **Conexión:** Generalmente se conecta a través de los pines GPIO (TX/RX), aunque existen adaptadores USB a TTL que facilitan la conexión a un puerto USB.
+*   **Librería de Python:** La librería más común es `pyfingerprint`. Puedes instalarla con `pip install pyfingerprint` y te permite registrar huellas, buscar, eliminar y verificar con facilidad.
+*   **Por qué es una buena opción:** Su popularidad significa que cualquier problema que encuentres, es muy probable que alguien más ya lo haya resuelto y documentado en foros o blogs.
+
+#### 2. Lectores Digital Persona U.are.U
+
+*   **Descripción:** Estos son lectores de grado más comercial, conocidos por su fiabilidad y rapidez. Son los que a menudo se ven en entornos de oficina.
+*   **Conexión:** Son directamente USB, lo que simplifica la conexión física.
+*   **Librería de Python:** La integración puede ser un poco más compleja. No siempre hay una librería de `pip` directa. A menudo, se requiere instalar los drivers oficiales para Linux y luego usar una librería de Python que se comunique con esos drivers, como `pyfprint` (una envoltura de `libfprint`).
+*   **Por qué es una buena opción:** Si buscas una solución más robusta y no te intimida la posible configuración de drivers en Linux.
+
+**Conclusión de la Recomendación:**
+
+Para empezar y asegurar la compatibilidad más sencilla, te recomiendo encarecidamente buscar un **sensor tipo GT-521F32 o GT-521F52** (o un kit de Adafruit que lo incluya). La disponibilidad de la librería `pyfingerprint` hará que la integración con el script de Python sea mucho más directa.
+
+---
+
 ## 4. Sistema de Notificaciones por Correo Electrónico
 
 El sistema está preparado para enviar notificaciones automáticas por correo electrónico a los tutores.
@@ -201,3 +228,4 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
     2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
     3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend en el entorno del servidor.
     4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
+
