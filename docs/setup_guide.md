@@ -22,9 +22,9 @@ Esta guía proporciona los pasos técnicos para configurar los componentes de ba
 
 El sistema se compone de tres partes principales:
 
-*   **Aplicación Web (Frontend):** La interfaz de Next.js que estás viendo. Sirve como un panel de control para visualizar y gestionar los datos.
+*   **Aplicación Web (Frontend):** La interfaz de Next.js que estás viendo. Sirve como un panel de control para visualizar y gestionar los datos. **Esta aplicación se accede desde cualquier navegador, en cualquier sistema operativo (Windows, Mac, etc.).**
 *   **Base de Datos (Firestore):** El cerebro del sistema. Almacena toda la información de alumnos y sus registros de asistencia.
-*   **Script de Captura (Backend):** Un script de Python que se ejecuta en una Raspberry Pi. Este se conecta al lector de huellas y a Firestore para registrar las asistencias en tiempo real.
+*   **Script de Captura (Backend):** Un script de Python que se ejecuta en una **Raspberry Pi**. Este se conecta al lector de huellas y a Firestore para registrar las asistencias en tiempo real.
 
 ## 2. Configuración de Firebase Firestore
 
@@ -77,6 +77,8 @@ service cloud.firestore {
 ```
 
 ## 3. Configuración del Backend en Raspberry Pi
+
+**Aclaración Importante:** El lector de huellas **no se conecta a la computadora donde administras la página web**. Se conecta a una **Raspberry Pi**, que es una computadora pequeña de bajo costo que debe estar en la escuela. Esta Raspberry Pi utiliza el sistema operativo **Linux**. Por esta razón, la compatibilidad del lector con Linux es el factor más importante.
 
 ### 3.1. Obtener Credenciales de Firebase
 
@@ -197,7 +199,7 @@ while True:
 
 ¡Tienes toda la razón! Los lectores de huellas comerciales pueden ser muy caros. Afortunadamente, hay opciones mucho más económicas que son perfectas para este proyecto.
 
-La compatibilidad no depende de la marca, sino de su capacidad para ser controlado por un **script de Python en tu Raspberry Pi**.
+La compatibilidad no depende de la marca, sino de su capacidad para ser controlado por un **script de Python en tu Raspberry Pi (que usa Linux)**.
 
 Aquí te presento las opciones, ordenadas de la más recomendada (fácil y barata) a la más avanzada.
 
@@ -252,4 +254,5 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
     2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
     3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend en el entorno del servidor.
     4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
+
 
