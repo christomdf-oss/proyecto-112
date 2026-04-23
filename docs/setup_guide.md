@@ -214,9 +214,7 @@ while True:
 
 ### 3.3. Recomendaciones de Lector de Huellas (¡Enfocado en Costo y Compatibilidad!)
 
-¡Tienes toda la razón! Los lectores de huellas comerciales pueden ser muy caros. Afortunadamente, hay opciones mucho más económicas que son perfectas para este proyecto.
-
-La compatibilidad no depende de la marca, sino de su capacidad para ser controlado por un **script de Python en tu Raspberry Pi (que usa Linux)**.
+¡Tienes toda la razón! Los lectores de huellas comerciales pueden ser muy caros. Afortunadamente, hay opciones mucho más económicas que son perfectas para este proyecto. La compatibilidad no depende de la marca, sino de su capacidad para ser controlado por un **script de Python en tu Raspberry Pi (que usa Linux)**.
 
 Aquí te presento las opciones, ordenadas de la más recomendada (fácil y barata) a la más avanzada.
 
@@ -230,9 +228,11 @@ Esta es, por mucho, la mejor ruta para empezar sin gastar mucho y con la segurid
     *   `pip install pyfingerprint`
 *   **Ventaja Principal:** Es la combinación más económica y la que tiene más tutoriales y soporte en la comunidad. Es casi una garantía de éxito para tu script de Python.
 
-#### Opción 2: La Búsqueda del Lector USB "Plug-and-Play" Barato
+#### Opción 2: Checklist para Comprar un Lector USB Económico
 
 Si prefieres una solución de una sola pieza que se conecte directamente a USB, es posible encontrar opciones económicas, pero requiere un poco de investigación de tu parte antes de comprar.
+
+> **Advertencia:** No puedo verificar enlaces de productos directamente. Debes seguir estos pasos para confirmar la compatibilidad tú mismo antes de comprar.
 
 **El Criterio Más Importante: Compatibilidad con `libfprint`**
 
@@ -245,13 +245,13 @@ Para que un lector USB genérico funcione en Linux (el sistema de la Raspberry P
     *   `"fingerprint scanner raspberry pi"`
     *   `"libfprint compatible fingerprint reader"`
 
-2.  **Identifica el Modelo:** Cuando encuentres un lector barato que te interese, busca su nombre de modelo exacto. A veces los vendedores no lo ponen, pero puedes buscar en las preguntas y respuestas o en las reseñas.
+2.  **Identifica el Modelo:** Cuando encuentres un lector barato que te interese (como el que me compartiste), busca su nombre de modelo exacto. A veces los vendedores no lo ponen, pero puedes buscar en las preguntas y respuestas o en las reseñas. **Si no encuentras un modelo, es muy arriesgado.**
 
-3.  **Verifica en la Lista de `libfprint`:** Ve a la [lista de dispositivos soportados por `libfprint`](https://fprint.freedesktop.org/supported-devices.html) y busca el modelo. Si aparece en la lista, ¡es una excelente señal!
+3.  **Verifica en la Lista de `libfprint`:** Ve a la [lista de dispositivos soportados por `libfprint`](https://fprint.freedesktop.org/supported-devices.html) y busca el modelo. **Si aparece en la lista, ¡es una excelente señal!** Si no está, no lo compres.
 
 4.  **Busca una Librería de Python:** Una vez confirmada la compatibilidad con `libfprint`, busca una librería de Python que se integre con ella, como `pyfprint-next`.
 
-**Análisis de los modelos que mencionaste:**
+**Análisis de los tipos de lectores que mencionaste:**
 
 *   **Lector De Huellas Dactilares Para Escritorio Usb 360 Degree:** ¡Este es el tipo de lector que debes buscar! Son genéricos y muchos usan chipsets compatibles. Sigue el checklist de arriba para verificar un modelo específico antes de comprar.
 *   **Zkteco Zk9500:** Te reitero la advertencia. Aunque parezcan una buena opción, su soporte en Linux es muy pobre. Ahorrarás muchos dolores de cabeza si evitas los lectores ZKTeco para este proyecto, a menos que encuentres un tutorial muy reciente y fiable que garantice que funciona con Python en una Raspberry Pi.
@@ -271,6 +271,7 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
     2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
     3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend en el entorno del servidor.
     4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
+
 
 
 
