@@ -91,7 +91,9 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
     <>
       <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Alumno' : 'Registrar Nuevo Alumno'}</DialogTitle>
-          {isEditing && <DialogDescription>Realiza los cambios en el perfil del alumno y haz clic en Guardar.</DialogDescription>}
+          <DialogDescription>
+            Formulario para registrar o editar los datos de un alumno.
+          </DialogDescription>
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-4">
