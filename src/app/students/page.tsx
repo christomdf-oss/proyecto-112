@@ -26,8 +26,8 @@ import { StudentForm } from './student-form';
 import type { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { EnrollFingerprintDialog } from './enroll-fingerprint-dialog';
-import { useFirestore, useCollection } from '@/firebase';
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc, deleteDoc, getDocs, collection } from 'firebase/firestore';
 
 type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
 
@@ -35,7 +35,8 @@ const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'P
 
 export default function StudentsPage() {
   const firestore = useFirestore();
-  const { data: students, loading, error } = useCollection<Student>('students');
+  const [students, setStudents] = React.useState<Student[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -45,18 +46,26 @@ export default function StudentsPage() {
   const [enrollmentStudent, setEnrollmentStudent] = React.useState<Student | null>(null);
   const [comunidades, setComunidades] = React.useState(initialComunidades);
   
-  // Use a manual refetch function since useCollection handles live updates
-  const fetchStudents = React.useCallback(() => {
-    // This is a placeholder for any manual refetch logic if needed.
-    // with useCollection, data is already live.
-    toast({ title: 'Sincronizado', description: 'Los datos se actualizan en tiempo real.'});
-  }, [toast]);
+  const fetchStudents = React.useCallback(async () => {
+    if (!firestore) return;
+    setLoading(true);
+    try {
+      const studentsSnapshot = await getDocs(collection(firestore, 'students'));
+      const studentsList = studentsSnapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() } as Student))
+        .filter((s) => s.matricula && s.nombre);
+      setStudents(studentsList);
+    } catch (error: any) {
+      console.error("Error al cargar alumnos:", error);
+      toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: `No se pudieron cargar los datos: ${error.message}` });
+    } finally {
+      setLoading(false);
+    }
+  }, [firestore, toast]);
   
   React.useEffect(() => {
-    if (error) {
-       toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: `No se pudieron cargar los datos: ${error.message}` });
-    }
-  }, [error, toast]);
+    fetchStudents();
+  }, [fetchStudents]);
 
 
   const closeForm = () => {
@@ -89,7 +98,7 @@ export default function StudentsPage() {
           title: "Alumno Registrado",
           description: `${data.nombre} ha sido agregado exitosamente.`,
       });
-      // No need to call fetchStudents(), useCollection updates automatically
+      await fetchStudents();
     } catch (error: any) {
       console.error("Error detallado al añadir documento:", error);
       toast({ variant: 'destructive', title: 'Error al guardar', description: error.message });
@@ -109,7 +118,7 @@ export default function StudentsPage() {
         title: 'Alumno Actualizado',
         description: `El perfil de ${data.nombre} ha sido actualizado.`,
       });
-      // No need to call fetchStudents()
+      await fetchStudents();
     } catch (e: any) {
        console.error("Error al actualizar alumno:", e);
        toast({ variant: 'destructive', title: 'Error al actualizar', description: e.message });
@@ -131,7 +140,7 @@ export default function StudentsPage() {
         title: 'Alumno Eliminado',
         description: `El perfil de ${studentToDelete.nombre} ha sido eliminado.`,
       });
-      // No need to call fetchStudents()
+       await fetchStudents();
     } catch (e: any) {
       console.error("Error al eliminar alumno:", e);
       toast({ variant: 'destructive', title: 'Error al eliminar', description: `Ocurrió un error: ${e.message}` });
@@ -206,7 +215,7 @@ export default function StudentsPage() {
       >
         <div className="flex items-center gap-2">
             <Button variant="outline" onClick={fetchStudents} disabled={loading}>
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Sincronizar
             </Button>
             <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeForm()}>

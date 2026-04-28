@@ -54,7 +54,7 @@ export function EnrollFingerprintDialog({ student, onClose }: EnrollFingerprintD
               </Button>
           </div>
            <p className="text-xs text-muted-foreground text-center pt-2">
-            Una vez que el script confirme el registro exitoso, el estado de la huella en esta tabla se actualizará automáticamente.
+            Una vez que el script confirme el registro, puedes presionar el botón 'Sincronizar' en la página de alumnos para ver el estado actualizado.
           </p>
         </div>
         <DialogFooter className="sm:justify-center">
