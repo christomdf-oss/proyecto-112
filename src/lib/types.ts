@@ -8,7 +8,7 @@ export type Student = {
   correo_tutor: string;
   grupo: string;
   comunidad: string;
-  fingerprintRegistered?: boolean;
+  fingerprintId?: number;
 };
 
 export type Attendance = {

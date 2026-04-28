@@ -39,12 +39,14 @@ export const getColumns = ({ onEnroll, onEdit, onDelete, onCopyMatricula }: GetC
     header: 'Comunidad',
   },
   {
-    accessorKey: 'fingerprintRegistered',
-    header: 'Estado Huella',
+    accessorKey: 'fingerprintId',
+    header: 'Huella',
     cell: ({ row }) => {
-      const isRegistered = row.getValue('fingerprintRegistered');
+      const fingerprintId = row.getValue('fingerprintId');
+      const isRegistered = fingerprintId != null;
+      
       return isRegistered ? (
-        <Badge variant="success">Registrada</Badge>
+        <Badge variant="success">Registrada (ID: {String(fingerprintId)})</Badge>
       ) : (
         <Badge variant="destructive">Pendiente</Badge>
       );
@@ -75,7 +77,7 @@ export const getColumns = ({ onEnroll, onEdit, onDelete, onCopyMatricula }: GetC
               >
                 Copiar Matrícula
               </DropdownMenuItem>
-              {!student.fingerprintRegistered && (
+              {!student.fingerprintId && (
                 <DropdownMenuItem onClick={() => onEnroll(student)}>
                   Registrar Huella
                 </DropdownMenuItem>

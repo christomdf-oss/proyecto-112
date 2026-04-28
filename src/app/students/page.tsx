@@ -26,8 +26,8 @@ import { StudentForm } from './student-form';
 import type { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { EnrollFingerprintDialog } from './enroll-fingerprint-dialog';
-import { useFirestore } from '@/firebase';
-import { doc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { useFirestore, useCollection } from '@/firebase';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
 
@@ -35,10 +35,8 @@ const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'P
 
 export default function StudentsPage() {
   const firestore = useFirestore();
+  const { data: students, loading, error } = useCollection<Student>('students');
   const { toast } = useToast();
-
-  const [students, setStudents] = React.useState<Student[]>([]);
-  const [loading, setLoading] = React.useState(true);
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingStudent, setEditingStudent] = React.useState<Student | null>(null);
@@ -47,41 +45,19 @@ export default function StudentsPage() {
   const [enrollmentStudent, setEnrollmentStudent] = React.useState<Student | null>(null);
   const [comunidades, setComunidades] = React.useState(initialComunidades);
   
-  const fetchStudents = React.useCallback(async () => {
-    if (!firestore) return;
-    setLoading(true);
-    try {
-        const querySnapshot = await getDocs(collection(firestore, "students"));
-        const studentsData = querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            // Filter out incomplete documents
-            if (!data.matricula || !data.nombre) {
-                return null;
-            }
-            return {
-                id: doc.id,
-                matricula: data.matricula,
-                nombre: data.nombre,
-                telefono_tutor: data.telefono_tutor,
-                grupo: data.grupo,
-                comunidad: data.comunidad,
-                fingerprintRegistered: data.fingerprintRegistered,
-            } as Student;
-        }).filter((student): student is Student => student !== null); // Remove nulls from the array
-        setStudents(studentsData);
-    } catch (error: any) {
-        console.error("Error cargando alumnos: ", error);
-        toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: `No se pudieron cargar los datos: ${error.message}` });
-    } finally {
-        setLoading(false);
-    }
-}, [firestore, toast]);
-
+  // Use a manual refetch function since useCollection handles live updates
+  const fetchStudents = React.useCallback(() => {
+    // This is a placeholder for any manual refetch logic if needed.
+    // with useCollection, data is already live.
+    toast({ title: 'Sincronizado', description: 'Los datos se actualizan en tiempo real.'});
+  }, [toast]);
+  
   React.useEffect(() => {
-      if(firestore) {
-        fetchStudents();
-      }
-  }, [firestore, fetchStudents]);
+    if (error) {
+       toast({ variant: 'destructive', title: 'Error al cargar alumnos', description: `No se pudieron cargar los datos: ${error.message}` });
+    }
+  }, [error, toast]);
+
 
   const closeForm = () => {
     setIsFormOpen(false);
@@ -99,13 +75,12 @@ export default function StudentsPage() {
   const handleAddStudent = async (data: StudentFormValues) => {
     if (!firestore) return;
 
-    const newStudent: Omit<Student, 'id'> = {
+    // The new student won't have a fingerprintId yet.
+    const newStudent: Omit<Student, 'id' | 'fingerprintId'> = {
         ...data,
-        fingerprintRegistered: false,
     };
     
     try {
-      console.log("Intentando guardar nuevo alumno. Datos:", newStudent);
       const studentRef = doc(firestore, 'students', newStudent.matricula);
       await setDoc(studentRef, newStudent);
       
@@ -114,10 +89,10 @@ export default function StudentsPage() {
           title: "Alumno Registrado",
           description: `${data.nombre} ha sido agregado exitosamente.`,
       });
-      fetchStudents(); 
+      // No need to call fetchStudents(), useCollection updates automatically
     } catch (error: any) {
       console.error("Error detallado al añadir documento:", error);
-      window.alert(`Error al guardar: ${error.message}`);
+      toast({ variant: 'destructive', title: 'Error al guardar', description: error.message });
     }
   };
 
@@ -126,6 +101,7 @@ export default function StudentsPage() {
 
     try {
       const studentRef = doc(firestore, 'students', editingStudent.matricula);
+      // We merge to avoid overwriting the fingerprintId
       await setDoc(studentRef, data, { merge: true });
 
       closeForm();
@@ -133,7 +109,7 @@ export default function StudentsPage() {
         title: 'Alumno Actualizado',
         description: `El perfil de ${data.nombre} ha sido actualizado.`,
       });
-      fetchStudents();
+      // No need to call fetchStudents()
     } catch (e: any) {
        console.error("Error al actualizar alumno:", e);
        toast({ variant: 'destructive', title: 'Error al actualizar', description: e.message });
@@ -155,7 +131,7 @@ export default function StudentsPage() {
         title: 'Alumno Eliminado',
         description: `El perfil de ${studentToDelete.nombre} ha sido eliminado.`,
       });
-      fetchStudents();
+      // No need to call fetchStudents()
     } catch (e: any) {
       console.error("Error al eliminar alumno:", e);
       toast({ variant: 'destructive', title: 'Error al eliminar', description: `Ocurrió un error: ${e.message}` });
@@ -201,19 +177,6 @@ export default function StudentsPage() {
     setEnrollmentStudent(null);
   };
 
-  const handleEnrollSuccess = async (matricula: string) => {
-    if (!firestore) return;
-    
-    try {
-      const studentRef = doc(firestore, 'students', matricula);
-      await setDoc(studentRef, { fingerprintRegistered: true }, { merge: true });
-      toast({ title: 'Huella Registrada', description: 'El estado de la huella ha sido actualizado.' });
-      fetchStudents(); 
-    } catch (error: any) {
-      window.alert(`Error al actualizar el estado de la huella: ${error.message}`);
-    }
-  };
-
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
     setIsFormOpen(true);
@@ -244,7 +207,7 @@ export default function StudentsPage() {
         <div className="flex items-center gap-2">
             <Button variant="outline" onClick={fetchStudents} disabled={loading}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Refrescar
+              Sincronizar
             </Button>
             <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeForm()}>
                 <DialogTrigger asChild>
@@ -269,14 +232,13 @@ export default function StudentsPage() {
       </PageHeader>
       <Card>
         <CardContent className="pt-6">
-          <DataTable columns={studentColumns} data={students} isLoading={loading} />
+          <DataTable columns={studentColumns} data={students || []} isLoading={loading} />
         </CardContent>
       </Card>
       
       {enrollmentStudent && (
         <EnrollFingerprintDialog 
             student={enrollmentStudent}
-            onSuccess={handleEnrollSuccess}
             onClose={handleCloseEnrollDialog}
         />
       )}

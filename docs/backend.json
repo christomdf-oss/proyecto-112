@@ -30,9 +30,9 @@
           "type": "string",
           "description": "The student's community of origin."
         },
-        "fingerprintRegistered": {
-          "type": "boolean",
-          "description": "Whether the student's fingerprint is registered."
+        "fingerprintId": {
+          "type": "number",
+          "description": "The numeric ID of the fingerprint template stored in the sensor."
         }
       },
       "required": ["matricula", "nombre", "telefono_tutor", "correo_tutor", "grupo", "comunidad"]
