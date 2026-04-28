@@ -10,11 +10,12 @@ Esta guía proporciona los pasos técnicos para configurar los componentes de ba
     *   [2.1. Creación del Proyecto](#21-creación-del-proyecto)
     *   [2.2. Estructura de la Base de Datos](#22-estructura-de-la-base-de-datos)
     *   [2.3. Reglas de Seguridad](#23-reglas-de-seguridad)
-3.  [Configuración del Backend en Raspberry Pi](#3-configuración-del-backend-en-raspberry-pi)
-    *   [3.1. Obtener Credenciales de Firebase](#31-obtener-credenciales-de-firebase)
-    *   [3.2. Script de Python para Captura de Asistencia (`attendance.py`)](#32-script-de-python-para-captura-de-asistencia-attendancepy)
-    *   [3.3. Script de Python para Registrar Huellas (`enroll.py`)](#33-script-de-python-para-registrar-huellas-enrollpy)
-    *   [3.4. Recomendaciones de Lector de Huellas](#34-recomendaciones-de-lector-de-huellas)
+3.  [Configuración del Backend en Raspberry Pi (o tu PC para pruebas)](#3-configuración-del-backend-en-raspberry-pi-o-tu-pc-para-pruebas)
+    *   [3.1. Cómo Probar el Registro de Huellas en tu PC](#31-cómo-probar-el-registro-de-huellas-en-tu-pc)
+    *   [3.2. Obtener Credenciales de Firebase para los Scripts](#32-obtener-credenciales-de-firebase-para-los-scripts)
+    *   [3.3. Script de Python para Captura de Asistencia (`attendance.py`)](#33-script-de-python-para-captura-de-asistencia-attendancepy)
+    *   [3.4. Script de Python para Registrar Huellas (`enroll.py`)](#34-script-de-python-para-registrar-huellas-enrollpy)
+    *   [3.5. Recomendaciones de Lector de Huellas](#35-recomendaciones-de-lector-de-huellas)
 4.  [Sistema de Notificaciones por Correo Electrónico](#4-sistema-de-notificaciones-por-correo-electrónico)
 
 ---
@@ -77,26 +78,50 @@ service cloud.firestore {
 }
 ```
 
-## 3. Configuración del Backend en Raspberry Pi
+## 3. Configuración del Backend en Raspberry Pi (o tu PC para pruebas)
 
-**Aclaración Importante:** El lector de huellas **no se conecta a la computadora donde administras la página web**. Se conecta a una **Raspberry Pi**, que es una computadora pequeña de bajo costo que debe estar en la escuela. Esta Raspberry Pi utiliza el sistema operativo **Linux**. Por esta razón, la compatibilidad del lector con Linux es el factor más importante.
+**Aclaración Importante:** El hardware (lector de huellas) se conecta a una **Raspberry Pi** que usa Linux. Por eso, la compatibilidad del lector con Linux es crucial para la implementación final.
 
-> **💡 Nota para Pruebas Locales (¡Sin Raspberry Pi!)**
->
-> ¡No necesitas una Raspberry Pi para empezar a probar! Puedes ejecutar los scripts de Python de esta sección directamente en tu computadora (Windows, Mac, etc.) para simular el proceso de registro.
->
-> Los scripts de ejemplo están diseñados para pedirte un "ID de huella" o "matrícula" a través del teclado. Esto te permite verificar que la conexión con Firebase es correcta y que los registros se guardan como esperas, ¡todo antes de comprar el hardware!
+Sin embargo, **puedes probar todo el flujo de datos desde tu PC con Windows o Mac** sin tener una Raspberry Pi. Los scripts de Python que se muestran a continuación están diseñados para simular la lectura de la huella, permitiéndote verificar la conexión con Firebase y la lógica de la aplicación web.
 
-### 3.1. Obtener Credenciales de Firebase
+### 3.1. Cómo Probar el Registro de Huellas en tu PC
+
+Para registrar la huella de un alumno (de forma simulada) y ver cómo se actualiza en la aplicación web, sigue estos pasos en tu computadora personal:
+
+1.  **Instala Python:** Si no lo tienes, descárgalo desde [python.org](https://www.python.org/downloads/).
+2.  **Instala la Librería de Firebase:** Abre una terminal (Símbolo del sistema o PowerShell en Windows) y ejecuta el siguiente comando:
+    ```bash
+    pip install firebase-admin
+    ```
+3.  **Obtén tus Credenciales de Firebase:**
+    *   En la [consola de Firebase](https://console.firebase.google.com/), ve a **Configuración del proyecto** > **Cuentas de servicio**.
+    *   Haz clic en **"Generar nueva clave privada"**. Se descargará un archivo `.json`.
+    *   **Renombra** este archivo a `serviceAccountKey.json`.
+4.  **Prepara tu Carpeta de Trabajo:**
+    *   Crea una nueva carpeta en tu PC (por ejemplo, `C:\cobacam-backend`).
+    *   Copia el archivo `serviceAccountKey.json` dentro de esta carpeta.
+    *   Crea un nuevo archivo de texto en la misma carpeta y llámalo `enroll.py`.
+5.  **Copia el Código del Script:**
+    *   Abre el archivo `enroll.py` y pega el código completo que se encuentra en la sección **3.4. Script de Python para Registrar Huellas (`enroll.py`)** de esta guía.
+6.  **¡Ejecuta y Registra!**
+    *   En tu terminal, navega a la carpeta que creaste (ej. `cd C:\cobacam-backend`).
+    *   Ejecuta el script con el comando: `python enroll.py`
+    *   Sigue las instrucciones en la pantalla. Te pedirá la **matrícula** del alumno que deseas registrar. Puedes copiarla desde la tabla de Alumnos en la aplicación web.
+
+Una vez que el script se complete, el alumno tendrá un `fingerprintId` en la base de datos. Vuelve a la página de Alumnos en la web y haz clic en **"Sincronizar"** para ver el estado actualizado a "Registrada".
+
+---
+
+### 3.2. Obtener Credenciales de Firebase para los Scripts
 
 Tus scripts de Python necesitan un archivo de credenciales para autenticarse de forma segura.
 
 1.  En la consola de Firebase, ve a **Configuración del proyecto** (el ícono del engranaje).
 2.  Ve a la pestaña **Cuentas de servicio**.
 3.  Haz clic en **"Generar nueva clave privada"**. Se descargará un archivo `.json`.
-4.  **Renombra** este archivo a `serviceAccountKey.json` y cópialo a tu Raspberry Pi en la misma carpeta donde estarán tus scripts. **¡NUNCA compartas este archivo ni lo subas a un repositorio público!**
+4.  **Renombra** este archivo a `serviceAccountKey.json` y cópialo a tu Raspberry Pi o PC en la misma carpeta donde estarán tus scripts. **¡NUNCA compartas este archivo ni lo subas a un repositorio público!**
 
-### 3.2. Script de Python para Captura de Asistencia (`attendance.py`)
+### 3.3. Script de Python para Captura de Asistencia (`attendance.py`)
 
 Este script se ejecuta para el día a día. Se queda esperando una huella, la identifica y registra la entrada o salida.
 
@@ -222,7 +247,7 @@ while True:
     print("-" * 20)
 ```
 
-### 3.3. Script de Python para Registrar Huellas (`enroll.py`)
+### 3.4. Script de Python para Registrar Huellas (`enroll.py`)
 
 Este script se ejecuta solo cuando necesitas registrar la huella de un nuevo alumno o re-registrar una existente.
 
@@ -319,7 +344,7 @@ while True:
         print(f"Ocurrió un error durante el registro: {e}")
 ```
 
-### 3.4. Recomendaciones de Lector de Huellas
+### 3.5. Recomendaciones de Lector de Huellas
 
 Para que un lector de huellas funcione con este sistema, **NO importa la marca, el precio o la tienda donde lo compres**. Lo único que importa es que cumpla con **DOS** requisitos técnicos para que pueda ser controlado desde el script de Python en la Raspberry Pi (que usa Linux):
 
@@ -380,3 +405,5 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
     2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
     3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend en el entorno del servidor.
     4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
+
+    
