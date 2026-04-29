@@ -68,7 +68,7 @@ El sistema está diseñado con una arquitectura cliente-servidor desacoplada.
 
 *   **Aplicación Web (Next.js):** Es la interfaz de administración que estás utilizando. Se encarga de leer los datos de la base de datos, gestionar la información y activar el envío de notificaciones.
 *   **Base de Datos (Google Firestore):** Es la base de datos en la nube donde se almacenan todos los datos (alumnos, asistencias). Sirve como única fuente de verdad.
-*   **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en una Raspberry Pi conectada a un lector de huellas. Este script es responsable de leer la huella, identificar al alumno y registrar el evento de asistencia en Firestore.
+*   **Backend de Captura (PC de escritorio):** Un script de Python se ejecuta en una PC con Windows conectada a un lector de huellas. Este script es responsable de leer la huella, identificar al alumno y registrar el evento de asistencia en Firestore.
 *   **Servicio de Correo (Resend/SendGrid):** Un servicio externo que se integra con la aplicación para gestionar el envío masivo de correos de manera fiable.
 
 Este diseño permite que la aplicación web y el dispositivo de captura operen de manera independiente, comunicándose solo a través de la base de datos y los servicios en la nube.

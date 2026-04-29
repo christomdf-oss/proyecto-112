@@ -31,7 +31,7 @@ export function EnrollFingerprintDialog({ student, onClose }: EnrollFingerprintD
         <DialogHeader>
           <DialogTitle>Registrar Huella para {student.nombre}</DialogTitle>
           <DialogDescription>
-            El registro de huellas se realiza desde la Raspberry Pi.
+            El registro de huellas se realiza desde el equipo donde está conectado el sensor.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
@@ -40,7 +40,7 @@ export function EnrollFingerprintDialog({ student, onClose }: EnrollFingerprintD
           </div>
           <div className="space-y-2 text-sm text-center text-muted-foreground">
             <p>
-              Para registrar la huella de este alumno, necesitarás ejecutar el script de enrolamiento en el dispositivo donde está conectado el sensor (la Raspberry Pi).
+              Para registrar la huella de este alumno, necesitarás ejecutar el script de enrolamiento (`enroll.py`) en esta PC, desde una terminal de comandos.
             </p>
              <p className="font-semibold text-foreground">
               El script te pedirá la matrícula del alumno.

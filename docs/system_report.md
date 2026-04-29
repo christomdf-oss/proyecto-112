@@ -61,7 +61,7 @@ El sistema se basa en una arquitectura de tres componentes principales que traba
 
 2.  **Base de Datos en la Nube (Google Firestore):** Actúa como el cerebro y la única fuente de verdad del sistema. Almacena de forma segura y centralizada las colecciones de `students` y `asistencias`.
 
-3.  **Backend de Captura (Raspberry Pi):** Un script de Python se ejecuta en un dispositivo físico (Raspberry Pi) en el plantel. Este script está conectado a un lector de huellas dactilares y es el único componente con permisos para escribir en la base de datos. Su responsabilidad es capturar la huella, identificar al alumno y registrar el evento de asistencia.
+3.  **Backend de Captura (PC de Escritorio):** Un script de Python se ejecuta en un dispositivo físico (PC con Windows) en el plantel. Este script está conectado a un lector de huellas dactilares y es el único componente con permisos para escribir en la base de datos. Su responsabilidad es capturar la huella, identificar al alumno y registrar el evento de asistencia.
 
 Esta arquitectura desacoplada garantiza que cada componente tenga una única responsabilidad, haciendo el sistema más robusto, seguro y escalable.
 

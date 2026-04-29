@@ -10,7 +10,7 @@ Esta guía proporciona los pasos técnicos para configurar los componentes de ba
     *   [2.1. Creación del Proyecto](#21-creación-del-proyecto)
     *   [2.2. Estructura de la Base de Datos](#22-estructura-de-la-base-de-datos)
     *   [2.3. Reglas de Seguridad](#23-reglas-de-seguridad)
-3.  [Configuración del Backend en tu PC (o Raspberry Pi)](#3-configuración-del-backend-en-tu-pc-o-raspberry-pi)
+3.  [Configuración del Backend de Captura en tu PC](#3-configuración-del-backend-de-captura-en-tu-pc)
     *   [3.1. Obtener Credenciales de Firebase para los Scripts](#31-obtener-credenciales-de-firebase-para-los-scripts)
     *   [3.2. Script de Python para Registrar Huellas (`enroll.py`)](#32-script-de-python-para-registrar-huellas-enrollpy)
     *   [3.3. Script de Python para Captura de Asistencia (`attendance.py`)](#33-script-de-python-para-captura-de-asistencia-attendancepy)
@@ -25,7 +25,7 @@ El sistema se compone de tres partes principales:
 
 *   **Aplicación Web (Frontend):** La interfaz de Next.js que estás viendo. Sirve como un panel de control para visualizar y gestionar los datos. **Esta aplicación se accede desde cualquier navegador, en cualquier sistema operativo (Windows, Mac, etc.).**
 *   **Base de Datos (Firestore):** El cerebro del sistema. Almacena toda la información de alumnos y sus registros de asistencia.
-*   **Script de Captura (Backend):** Scripts de Python que se ejecutan en una **computadora con el sensor de huellas conectado** (puede ser tu PC de escritorio con Windows o una Raspberry Pi). Estos se conectan al lector de huellas y a Firestore para registrar las asistencias y enrolar nuevas huellas.
+*   **Script de Captura (Backend):** Scripts de Python que se ejecutan en una **computadora con el sensor de huellas conectado** (tu PC de escritorio con Windows). Estos se conectan al lector de huellas y a Firestore para registrar las asistencias y enrolar nuevas huellas.
 
 ## 2. Configuración de Firebase Firestore
 
@@ -77,9 +77,9 @@ service cloud.firestore {
 }
 ```
 
-## 3. Configuración del Backend en tu PC (o Raspberry Pi)
+## 3. Configuración del Backend de Captura en tu PC
 
-**Aclaración Importante:** El hardware (lector de huellas) se conecta a una computadora que ejecuta los scripts de Python. Puede ser una **Raspberry Pi** con Linux o tu **PC de escritorio** con Windows. La compatibilidad del lector es crucial.
+**Aclaración Importante:** El hardware (lector de huellas) se conecta a una computadora que ejecuta los scripts de Python, en este caso, tu **PC de escritorio** con Windows. La compatibilidad del lector es crucial.
 
 ### 3.1. Obtener Credenciales de Firebase para los Scripts
 
@@ -340,7 +340,7 @@ while True:
 
 ### 3.4. Recomendaciones de Lector de Huellas
 
-Para que un lector de huellas funcione con este sistema, **NO importa la marca, el precio o la tienda donde lo compres**. Lo único que importa es que cumpla con **DOS** requisitos técnicos para que pueda ser controlado desde el script de Python en tu PC o Raspberry Pi:
+Para que un lector de huellas funcione con este sistema, **NO importa la marca, el precio o la tienda donde lo compres**. Lo único que importa es que cumpla con **DOS** requisitos técnicos para que pueda ser controlado desde el script de Python en tu PC:
 
 1.  **Compatibilidad con el Sistema Operativo (Windows/Linux):**
     *   Para lectores **USB genéricos**, el modelo debe ser compatible con la librería de Python que se usará. Por ejemplo, los scripts de esta guía están adaptados para el **ZKTeco ZK9500** y la librería `pyzkfp`.
@@ -351,7 +351,7 @@ Para que un lector de huellas funcione con este sistema, **NO importa la marca, 
         *   Para los sensores tipo módulo (GT-521Fxx), la librería es `pyfingerprint`.
 
 **En resumen: si encuentras un lector, tu checklist de dos pasos es:**
-1.  ¿Funciona en mi sistema operativo (Windows/Linux)?
+1.  ¿Funciona en mi sistema operativo (Windows)?
 2.  ¿Existe una librería de Python para controlarlo y tiene buena documentación?
 
 Si la respuesta a ambas preguntas es sí, ¡el lector es compatible!
@@ -364,8 +364,9 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
 
 *   **¿Cómo funciona?**
     1.  **Registro de Correo:** Asegúrate de que cada alumno tenga el `correo_tutor` registrado en su perfil.
-    2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
+    2.  **Envío en Registros Manuales:** Cuando se registra una **entrada** o **salida** desde la aplicación web (un registro manual), el sistema envía automáticamente un correo al tutor.
     3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend como una variable de entorno en tu servidor.
-    4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
-
-    
+    4.  **Automatización para el Lector de Huellas (Recomendado):** Para que los registros del lector de huellas también envíen correos, el método más seguro y profesional es implementar una **Cloud Function** en Firebase. Esta es la práctica recomendada para no exponer credenciales en tu PC.
+        *   **¿Qué es una Cloud Function?** Es un pequeño trozo de código que vive en los servidores de Google y se ejecuta automáticamente cuando algo sucede en tu base de datos.
+        *   **¿Cómo se implementaría?** Crearías una función que se "dispare" cada vez que el script `attendance.py` añada un nuevo documento a la colección `asistencias`. Esta función leería los datos del nuevo registro y usaría la clave de Resend (guardada de forma segura en el entorno de Google) para enviar el correo.
+        *   **Ventaja:** Este método es mucho más seguro que intentar enviar el correo desde el script de Python en tu PC, ya que no necesitas manejar contraseñas de correo ni claves de API en tu máquina local.
