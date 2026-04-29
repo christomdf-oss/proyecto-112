@@ -30,9 +30,9 @@
           "type": "string",
           "description": "The student's community of origin."
         },
-        "fingerprintId": {
-          "type": "number",
-          "description": "The numeric ID of the fingerprint template stored in the sensor."
+        "fingerprintTemplate": {
+          "type": "string",
+          "description": "The Base64 encoded fingerprint template from the sensor."
         }
       },
       "required": ["matricula", "nombre", "telefono_tutor", "correo_tutor", "grupo", "comunidad"]

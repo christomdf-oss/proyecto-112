@@ -10,12 +10,11 @@ Esta guía proporciona los pasos técnicos para configurar los componentes de ba
     *   [2.1. Creación del Proyecto](#21-creación-del-proyecto)
     *   [2.2. Estructura de la Base de Datos](#22-estructura-de-la-base-de-datos)
     *   [2.3. Reglas de Seguridad](#23-reglas-de-seguridad)
-3.  [Configuración del Backend en Raspberry Pi (o tu PC para pruebas)](#3-configuración-del-backend-en-raspberry-pi-o-tu-pc-para-pruebas)
-    *   [3.1. Cómo Probar el Registro de Huellas en tu PC](#31-cómo-probar-el-registro-de-huellas-en-tu-pc)
-    *   [3.2. Obtener Credenciales de Firebase para los Scripts](#32-obtener-credenciales-de-firebase-para-los-scripts)
+3.  [Configuración del Backend en tu PC (o Raspberry Pi)](#3-configuración-del-backend-en-tu-pc-o-raspberry-pi)
+    *   [3.1. Obtener Credenciales de Firebase para los Scripts](#31-obtener-credenciales-de-firebase-para-los-scripts)
+    *   [3.2. Script de Python para Registrar Huellas (`enroll.py`)](#32-script-de-python-para-registrar-huellas-enrollpy)
     *   [3.3. Script de Python para Captura de Asistencia (`attendance.py`)](#33-script-de-python-para-captura-de-asistencia-attendancepy)
-    *   [3.4. Script de Python para Registrar Huellas (`enroll.py`)](#34-script-de-python-para-registrar-huellas-enrollpy)
-    *   [3.5. Recomendaciones de Lector de Huellas](#35-recomendaciones-de-lector-de-huellas)
+    *   [3.4. Recomendaciones de Lector de Huellas](#34-recomendaciones-de-lector-de-huellas)
 4.  [Sistema de Notificaciones por Correo Electrónico](#4-sistema-de-notificaciones-por-correo-electrónico)
 
 ---
@@ -26,7 +25,7 @@ El sistema se compone de tres partes principales:
 
 *   **Aplicación Web (Frontend):** La interfaz de Next.js que estás viendo. Sirve como un panel de control para visualizar y gestionar los datos. **Esta aplicación se accede desde cualquier navegador, en cualquier sistema operativo (Windows, Mac, etc.).**
 *   **Base de Datos (Firestore):** El cerebro del sistema. Almacena toda la información de alumnos y sus registros de asistencia.
-*   **Script de Captura (Backend):** Scripts de Python que se ejecutan en una **Raspberry Pi**. Estos se conectan al lector de huellas y a Firestore para registrar las asistencias y enrolar nuevas huellas.
+*   **Script de Captura (Backend):** Scripts de Python que se ejecutan en una **computadora con el sensor de huellas conectado** (puede ser tu PC de escritorio con Windows o una Raspberry Pi). Estos se conectan al lector de huellas y a Firestore para registrar las asistencias y enrolar nuevas huellas.
 
 ## 2. Configuración de Firebase Firestore
 
@@ -47,7 +46,7 @@ Tu base de datos en Firestore tendrá dos colecciones principales:
             "comunidad": "CHICBUL",
             "telefono_tutor": "5219811234567",
             "correo_tutor": "tutor.juan@example.com",
-            "fingerprintId": 123 
+            "fingerprintTemplate": "base64_encoded_string_here" 
         }
         ```
 *   `asistencias`: Cada documento es un registro de entrada o salida.
@@ -63,7 +62,7 @@ Tu base de datos en Firestore tendrá dos colecciones principales:
 
 ### 2.3. Reglas de Seguridad
 
-Estas reglas permiten que la aplicación web lea los datos, pero solo el script de la Raspberry Pi (que usa credenciales de administrador) podrá escribir en la base de datos. Ve a tu proyecto de Firebase -> Firestore Database -> Pestaña de Reglas y pega lo siguiente:
+Estas reglas permiten que la aplicación web lea los datos, pero solo el script de Python (que usa credenciales de administrador) podrá escribir en la base de datos. Ve a tu proyecto de Firebase -> Firestore Database -> Pestaña de Reglas y pega lo siguiente:
 
 ```
 rules_version = '2';
@@ -78,60 +77,141 @@ service cloud.firestore {
 }
 ```
 
-## 3. Configuración del Backend en Raspberry Pi (o tu PC para pruebas)
+## 3. Configuración del Backend en tu PC (o Raspberry Pi)
 
-**Aclaración Importante:** El hardware (lector de huellas) se conecta a una **Raspberry Pi** que usa Linux. Por eso, la compatibilidad del lector con Linux es crucial para la implementación final.
+**Aclaración Importante:** El hardware (lector de huellas) se conecta a una computadora que ejecuta los scripts de Python. Puede ser una **Raspberry Pi** con Linux o tu **PC de escritorio** con Windows. La compatibilidad del lector es crucial.
 
-Sin embargo, **puedes probar todo el flujo de datos desde tu PC con Windows o Mac** sin tener una Raspberry Pi. Los scripts de Python que se muestran a continuación están diseñados para simular la lectura de la huella, permitiéndote verificar la conexión con Firebase y la lógica de la aplicación web.
-
-### 3.1. Cómo Probar el Registro de Huellas en tu PC
-
-Para registrar la huella de un alumno (de forma simulada) y ver cómo se actualiza en la aplicación web, sigue estos pasos en tu computadora personal:
-
-1.  **Instala Python:** Si no lo tienes, descárgalo desde [python.org](https://www.python.org/downloads/).
-2.  **Instala la Librería de Firebase:** Abre una terminal (Símbolo del sistema o PowerShell en Windows) y ejecuta el siguiente comando:
-    ```bash
-    pip install firebase-admin
-    ```
-3.  **Obtén tus Credenciales de Firebase:**
-    *   En la [consola de Firebase](https://console.firebase.google.com/), ve a **Configuración del proyecto** > **Cuentas de servicio**.
-    *   Haz clic en **"Generar nueva clave privada"**. Se descargará un archivo `.json`.
-    *   **Renombra** este archivo a `serviceAccountKey.json`.
-4.  **Prepara tu Carpeta de Trabajo:**
-    *   Crea una nueva carpeta en tu PC (por ejemplo, `C:\cobacam-backend`).
-    *   Copia el archivo `serviceAccountKey.json` dentro de esta carpeta.
-    *   Crea un nuevo archivo de texto en la misma carpeta y llámalo `enroll.py`.
-5.  **Copia el Código del Script:**
-    *   Abre el archivo `enroll.py` y pega el código completo que se encuentra en la sección **3.4. Script de Python para Registrar Huellas (`enroll.py`)** de esta guía.
-6.  **¡Ejecuta y Registra!**
-    *   En tu terminal, navega a la carpeta que creaste (ej. `cd C:\cobacam-backend`).
-    *   Ejecuta el script con el comando: `python enroll.py`
-    *   Sigue las instrucciones en la pantalla. Te pedirá la **matrícula** del alumno que deseas registrar. Puedes copiarla desde la tabla de Alumnos en la aplicación web.
-
-Una vez que el script se complete, el alumno tendrá un `fingerprintId` en la base de datos. Vuelve a la página de Alumnos en la web y haz clic en **"Sincronizar"** para ver el estado actualizado a "Registrada".
-
----
-
-### 3.2. Obtener Credenciales de Firebase para los Scripts
+### 3.1. Obtener Credenciales de Firebase para los Scripts
 
 Tus scripts de Python necesitan un archivo de credenciales para autenticarse de forma segura.
 
 1.  En la consola de Firebase, ve a **Configuración del proyecto** (el ícono del engranaje).
 2.  Ve a la pestaña **Cuentas de servicio**.
 3.  Haz clic en **"Generar nueva clave privada"**. Se descargará un archivo `.json`.
-4.  **Renombra** este archivo a `serviceAccountKey.json` y cópialo a tu Raspberry Pi o PC en la misma carpeta donde estarán tus scripts. **¡NUNCA compartas este archivo ni lo subas a un repositorio público!**
+4.  **Renombra** este archivo a `serviceAccountKey.json` y cópialo a tu PC en la misma carpeta donde estarán tus scripts. **¡NUNCA compartas este archivo ni lo subas a un repositorio público!**
+
+### 3.2. Script de Python para Registrar Huellas (`enroll.py`)
+
+Este script se ejecuta solo cuando necesitas registrar la huella de un nuevo alumno. Está configurado para usar un sensor **ZKTeco ZK9500** con la librería `pyzkfp`.
+
+**Instala las librerías necesarias en tu PC:**
+```bash
+# Instalar Python si no lo tienes: https://www.python.org/downloads/
+pip install firebase-admin
+pip install pyzkfp
+```
+> **Nota para Windows:** La instalación de `pyzkfp` puede requerir "Microsoft C++ Build Tools". Si la instalación falla, puedes descargarlas desde [aquí](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
+
+**Código del script (`enroll.py`):**
+```python
+import time
+import firebase_admin
+from firebase_admin import credentials, firestore
+import base64
+from pyzkfp import ZKFP
+
+def initialize_sensor():
+    """Inicializa el sensor de huellas."""
+    try:
+        zkfp = ZKFP()
+        print("Sensor ZK9500 inicializado correctamente.")
+        return zkfp
+    except Exception as e:
+        print(f"Error al inicializar el sensor: {e}")
+        print("Asegúrate de que el sensor esté conectado y los drivers instalados.")
+        return None
+
+def enroll_fingerprint(zkfp):
+    """
+    Captura y crea una plantilla de huella.
+    Requiere 3 capturas exitosas.
+    """
+    print("\n--- Iniciando Proceso de Registro de Huella ---")
+    templates = []
+    for i in range(1, 4):
+        input(f"Presiona Enter y luego coloca el dedo en el sensor para la captura #{i}...")
+        
+        template = zkfp.capture()
+        if not template:
+            print("Error en la captura. Intenta de nuevo.")
+            return None
+        
+        templates.append(template)
+        print(f"Captura #{i} exitosa.")
+        time.sleep(1) # Pequeña pausa
+    
+    # Unir las plantillas
+    try:
+        enrolled_template = zkfp.enroll(templates)
+        print("¡Plantilla de huella creada exitosamente!")
+        return enrolled_template
+    except Exception as e:
+        print(f"Error al crear la plantilla final: {e}")
+        return None
+
+
+# --- Inicialización de Firebase ---
+try:
+    cred = credentials.Certificate("serviceAccountKey.json")
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    print("Conexión con Firebase establecida.")
+except Exception as e:
+    print(f"Error al conectar con Firebase: {e}")
+    exit()
+
+# --- Lógica Principal de Enrolamiento ---
+zkfp = initialize_sensor()
+if not zkfp:
+    exit()
+
+while True:
+    matricula = input("\nIngresa la matrícula del alumno a registrar (o 'exit' para salir): ")
+    if matricula.lower() == 'exit':
+        break
+
+    # 1. Verificar si el alumno existe
+    student_ref = db.collection('students').document(matricula)
+    student_doc = student_ref.get()
+
+    if not student_doc.exists:
+        print(f"Error: No se encontró ningún alumno con la matrícula '{matricula}'.")
+        continue
+    
+    student_data = student_doc.to_dict()
+    print(f"Alumno encontrado: {student_data.get('nombre')}")
+
+    if student_data.get('fingerprintTemplate') is not None:
+        print(f"ADVERTENCIA: Este alumno ya tiene una huella registrada.")
+        overwrite = input("¿Deseas sobreescribirla? (s/n): ").lower()
+        if overwrite != 's':
+            print("Registro cancelado.")
+            continue
+    
+    try:
+        # 2. Registrar huella
+        template = enroll_fingerprint(zkfp)
+
+        if template:
+            # 3. Codificar en Base64 y actualizar Firestore
+            encoded_template = base64.b64encode(template).decode('utf-8')
+            student_ref.update({
+                'fingerprintTemplate': encoded_template
+            })
+            print(f"¡Éxito! La base de datos ha sido actualizada para {student_data.get('nombre')}.")
+
+    except Exception as e:
+        print(f"Ocurrió un error durante el registro: {e}")
+
+# Finalizar la conexión con el sensor
+del zkfp
+print("\nConexión con el sensor finalizada.")
+```
 
 ### 3.3. Script de Python para Captura de Asistencia (`attendance.py`)
 
 Este script se ejecuta para el día a día. Se queda esperando una huella, la identifica y registra la entrada o salida.
-
-**Instala las librerías necesarias en tu Raspberry Pi (o computadora local):**
-```bash
-# Instalar Python si no lo tienes: https://www.python.org/downloads/
-pip install firebase-admin
-# También instala la librería para tu lector de huellas (ej. pyfingerprint)
-# pip install pyfingerprint
-```
 
 **Código del script (`attendance.py`):**
 
@@ -140,51 +220,49 @@ import time
 import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
+import base64
+from pyzkfp import ZKFP
 
-def get_fingerprint_id():
-    """
-    Función para simular la lectura de una huella en una PC
-    o para integrar el código de tu sensor en la Raspberry Pi.
-    
-    En un entorno real, esta función usaría la librería del sensor
-    para leer la huella y devolvería el ID de la plantilla encontrada.
-    """
-    print("Esperando huella...")
-    try:
-        # Para pruebas, simplemente se ingresa un ID.
-        # En producción, aquí iría el código que lee el sensor.
-        # Ejemplo con pyfingerprint:
-        # while ( sensor.readImage() == False ):
-        #   pass
-        # sensor.convertImage(0x01)
-        # result = sensor.searchTemplate()
-        # finger_id = result[0]
-        finger_id = int(input("Ingresa ID de huella (ej. 1, 2, 3...): "))
-        print(f"Huella leída con ID: {finger_id}")
-        return finger_id
-    except ValueError:
-        print("ID no válido. Inténtalo de nuevo.")
-        return None
-
-# --- Inicio del script principal ---
-
-# 1. Conexión con Firebase
+# --- Inicialización ---
 try:
+    # Firebase
     cred = credentials.Certificate("serviceAccountKey.json")
-    firebase_admin.initialize_app(cred)
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred)
     db = firestore.client()
     print("Conexión con Firebase establecida.")
+    # Sensor
+    zkfp = ZKFP()
+    print("Sensor ZK9500 inicializado correctamente.")
 except Exception as e:
-    print(f"Error al conectar con Firebase: {e}")
+    print(f"Error en la inicialización: {e}")
     exit()
 
-def get_student_by_fingerprint(finger_id):
-    """Busca un alumno en Firestore usando el ID de su huella."""
-    students_ref = db.collection('students')
-    query = students_ref.where('fingerprintId', '==', finger_id).limit(1).stream()
-    
-    for student in query:
-        return student.to_dict(), student.id
+def load_templates_from_firestore():
+    """
+    Carga todas las plantillas de huellas desde Firestore a la memoria.
+    """
+    print("\nCargando plantillas de huellas desde la base de datos...")
+    templates_map = {}
+    try:
+        students_ref = db.collection('students').where('fingerprintTemplate', '!=', None).stream()
+        for student in students_ref:
+            student_data = student.to_dict()
+            # Guardamos la plantilla decodificada, asociada a la matrícula (ID del documento)
+            templates_map[student.id] = base64.b64decode(student_data['fingerprintTemplate'])
+        
+        print(f"Se cargaron {len(templates_map)} plantillas de huellas.")
+        return templates_map
+    except Exception as e:
+        print(f"Error al cargar plantillas: {e}")
+        return {}
+
+def get_student_by_id(student_id):
+    """Busca un alumno en Firestore usando su matrícula (ID del documento)."""
+    student_ref = db.collection('students').document(student_id)
+    student_doc = student_ref.get()
+    if student_doc.exists:
+        return student_doc.to_dict(), student_doc.id
     return None, None
 
 def get_last_attendance(student_id):
@@ -216,183 +294,67 @@ def register_attendance(student_data, student_id, record_type):
     }
     db.collection('asistencias').add(new_record)
     print(f"ÉXITO: Registro de '{record_type}' para {student_data['nombre']}.")
-    
-    # La notificación por correo será gestionada por la aplicación web
-    # o una Cloud Function que escuche la colección 'asistencias'.
-    print("INFO: La notificación por correo se procesará en el backend web.")
+    print("INFO: La notificación por correo se procesará en el backend web si está configurada.")
 
+# --- Bucle Principal de Escucha ---
+all_templates = load_templates_from_firestore()
 
-# 2. Bucle principal de escucha
 while True:
-    finger_id = get_fingerprint_id()
+    print("\nEsperando huella...")
+    live_template = zkfp.capture()
 
-    if finger_id is None:
+    if not live_template:
+        print("Error en captura, reintentando...")
+        time.sleep(2)
         continue
 
-    student_data, student_id = get_student_by_fingerprint(finger_id)
+    # Comparar la huella capturada con todas las plantillas en memoria
+    match_found = False
+    for student_id, stored_template in all_templates.items():
+        if zkfp.match_template(live_template, stored_template):
+            print(f"Huella reconocida. Coincide con la matrícula: {student_id}")
+            match_found = True
+            
+            student_data, doc_id = get_student_by_id(student_id)
+            if not student_data:
+                print(f"ERROR: No se encontraron datos para la matrícula {student_id}.")
+                break
+            
+            print(f"Alumno identificado: {student_data['nombre']}")
 
-    if not student_data:
-        print(f"ERROR: Huella con ID {finger_id} no está registrada en la base de datos.")
-        continue
+            last_record = get_last_attendance(student_id)
+            
+            if last_record and last_record['type'] == 'entrada':
+                register_attendance(student_data, student_id, 'salida')
+            else:
+                register_attendance(student_data, student_id, 'entrada')
+            
+            break # Salir del bucle de comparación
 
-    print(f"Alumno identificado: {student_data['nombre']} ({student_id})")
-
-    last_record = get_last_attendance(student_id)
-    
-    if last_record and last_record['type'] == 'entrada':
-        register_attendance(student_data, student_id, 'salida')
-    else:
-        register_attendance(student_data, student_id, 'entrada')
+    if not match_found:
+        print("ERROR: Huella no reconocida. No coincide con ninguna plantilla en la base de datos.")
     
     print("-" * 20)
-```
-
-### 3.4. Script de Python para Registrar Huellas (`enroll.py`)
-
-Este script se ejecuta solo cuando necesitas registrar la huella de un nuevo alumno o re-registrar una existente.
-
-**Código del script (`enroll.py`):**
-```python
-import time
-import firebase_admin
-from firebase_admin import credentials, firestore
-
-# Si estás usando un sensor real, importa su librería aquí
-# from pyfingerprint.pyfingerprint import PyFingerprint
-
-def enroll_fingerprint_simulation(position):
-    """
-    Simula el proceso de enrolamiento para pruebas en una PC.
-    """
-    print("--- SIMULACIÓN DE REGISTRO DE HUELLA ---")
-    print("Coloca el dedo en el sensor...")
-    time.sleep(2)
-    print("Retira el dedo.")
     time.sleep(1)
-    print("Vuelve a colocar el mismo dedo en el sensor...")
-    time.sleep(2)
-    print(f"¡Éxito! Huella registrada en la posición (simulada): {position}")
-    return position
-
-def find_available_position_simulation():
-    """
-    Simula la búsqueda de una posición libre.
-    En un entorno real, aquí se consultaría el sensor.
-    """
-    # En esta simulación, simplemente devolvemos un número aleatorio.
-    import random
-    pos = random.randint(1, 200)
-    print(f"Se usará la posición libre (simulada): {pos}")
-    return pos
-
-# --- Firebase Initialization ---
-try:
-    cred = credentials.Certificate("serviceAccountKey.json")
-    # Evita reinicializar si ya existe una app (útil si combinas scripts)
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app(cred)
-    db = firestore.client()
-    print("Conexión con Firebase establecida.")
-except Exception as e:
-    print(f"Error al conectar con Firebase: {e}")
-    exit()
-
-# --- Main Enrollment Logic ---
-while True:
-    matricula = input("\nIngresa la matrícula del alumno a registrar (o 'exit' para salir): ")
-    if matricula.lower() == 'exit':
-        break
-
-    # 1. Verificar si el alumno existe
-    student_ref = db.collection('students').document(matricula)
-    student_doc = student_ref.get()
-
-    if not student_doc.exists:
-        print(f"Error: No se encontró ningún alumno con la matrícula '{matricula}'.")
-        continue
-    
-    student_data = student_doc.to_dict()
-    print(f"Alumno encontrado: {student_data.get('nombre')}")
-
-    if student_data.get('fingerprintId') is not None:
-        print(f"ADVERTENCIA: Este alumno ya tiene una huella registrada (ID: {student_data.get('fingerprintId')}).")
-        overwrite = input("¿Deseas sobreescribirla? (s/n): ").lower()
-        if overwrite != 's':
-            print("Registro cancelado.")
-            continue
-    
-    try:
-        # En un sistema real, aquí irían las funciones de la librería del sensor.
-        # Por ejemplo, con pyfingerprint:
-        # position_number = sensor.searchTemplate()
-        # sensor.createTemplate()
-        # sensor.storeTemplate(position_number)
-        
-        # 2. Encontrar posición libre
-        position_to_store = find_available_position_simulation()
-
-        # 3. Registrar huella
-        enroll_fingerprint_simulation(position_to_store)
-
-        # 4. Actualizar Firestore
-        student_ref.update({
-            'fingerprintId': position_to_store
-        })
-        print(f"¡Éxito! La base de datos ha sido actualizada para {student_data.get('nombre')}.")
-
-    except Exception as e:
-        print(f"Ocurrió un error durante el registro: {e}")
 ```
 
-### 3.5. Recomendaciones de Lector de Huellas
+### 3.4. Recomendaciones de Lector de Huellas
 
-Para que un lector de huellas funcione con este sistema, **NO importa la marca, el precio o la tienda donde lo compres**. Lo único que importa es que cumpla con **DOS** requisitos técnicos para que pueda ser controlado desde el script de Python en la Raspberry Pi (que usa Linux):
+Para que un lector de huellas funcione con este sistema, **NO importa la marca, el precio o la tienda donde lo compres**. Lo único que importa es que cumpla con **DOS** requisitos técnicos para que pueda ser controlado desde el script de Python en tu PC o Raspberry Pi:
 
-1.  **Compatibilidad con el Sistema Operativo (Linux):**
-    *   Para lectores **USB genéricos**, esto significa que el modelo debe aparecer en la lista oficial de dispositivos soportados por el proyecto **`libfprint`**.
-    *   Para sensores tipo **módulo (con pines)**, como el GT-521Fxx, la compatibilidad viene de su conexión serial (TTL), que es universal.
+1.  **Compatibilidad con el Sistema Operativo (Windows/Linux):**
+    *   Para lectores **USB genéricos**, el modelo debe ser compatible con la librería de Python que se usará. Por ejemplo, los scripts de esta guía están adaptados para el **ZKTeco ZK9500** y la librería `pyzkfp`.
 
 2.  **Compatibilidad con el Lenguaje de Programación (Python):**
     *   Debe existir una **librería de Python** que permita controlar el lector.
-        *   Para lectores compatibles con `libfprint`, la librería suele ser `pyfprint-next`.
-        *   Para los sensores GT-521Fxx, la librería es `pyfingerprint`.
+        *   Para los sensores ZK9500, la librería es `pyzkfp`.
+        *   Para los sensores tipo módulo (GT-521Fxx), la librería es `pyfingerprint`.
 
 **En resumen: si encuentras un lector, tu checklist de dos pasos es:**
-1.  ¿Es compatible con `libfprint` (para USB) o es un modelo GT-521Fxx (para módulo)?
-2.  ¿Existe una librería de Python para controlarlo?
+1.  ¿Funciona en mi sistema operativo (Windows/Linux)?
+2.  ¿Existe una librería de Python para controlarlo y tiene buena documentación?
 
 Si la respuesta a ambas preguntas es sí, ¡el lector es compatible!
-
-A continuación se presentan las opciones ordenadas de la más recomendada (fácil y barata) a la más avanzada.
-
-#### Opción 1 (Recomendada): El Sensor "Maker" por USB-TTL (La más barata y fiable)
-
-Esta es, por mucho, la mejor ruta para empezar sin gastar mucho y con la seguridad de que funcionará.
-
-*   **Modelo Sugerido:** Busca sensores de la serie **GT-521Fxx** (como el **GT-521F32** o **GT-521F52**). Son módulos pequeños y plateados.
-*   **¿Cómo se conecta por USB?** Estos sensores tienen pines, pero se conectan fácilmente a un puerto USB usando un **"Adaptador USB a TTL"** (son muy baratos, cuestan un par de dólares). Simplemente conectas los cables del sensor al adaptador, y el adaptador a la Raspberry Pi.
-*   **Librería de Python:** La librería `pyfingerprint` está hecha específicamente para estos sensores y es muy fácil de usar.
-    *   `pip install pyfingerprint`
-*   **Ventaja Principal:** Es la combinación más económica y la que tiene más tutoriales y soporte en la comunidad. Es casi una garantía de éxito para tu script de Python.
-
-#### Opción 2: Checklist para Comprar un Lector USB Económico
-
-Si prefieres una solución de una sola pieza que se conecte directamente a USB, es posible encontrar opciones económicas, pero requiere un poco de investigación de tu parte antes de comprar.
-
-> **Advertencia:** No puedo verificar enlaces de productos directamente. Debes seguir estos pasos para confirmar la compatibilidad tú mismo antes de comprar.
-
-**Checklist para Encontrar un Lector USB Barato:**
-
-1.  **Busca en tiendas online** (Amazon, AliExpress, MercadoLibre) usando términos como:
-    *   `"USB fingerprint reader linux"`
-    *   `"fingerprint scanner raspberry pi"`
-    *   `"libfprint compatible fingerprint reader"`
-
-2.  **Identifica el Modelo:** Cuando encuentres un lector barato que te interese, busca su nombre de modelo exacto. A veces los vendedores no lo ponen, pero puedes buscar en las preguntas y respuestas o en las reseñas. **Si no encuentras un modelo, es muy arriesgado.**
-
-3.  **Verifica en la Lista de `libfprint`:** Ve a la [lista de dispositivos soportados por `libfprint`](https://fprint.freedesktop.org/supported-devices.html) y busca el modelo. **Si aparece en la lista, ¡es una excelente señal!** Si no está, no lo compres.
-
-4.  **Busca una Librería de Python:** Una vez confirmada la compatibilidad con `libfprint`, busca una librería de Python que se integre con ella, como `pyfprint-next`.
 
 ---
 
@@ -403,7 +365,7 @@ El sistema está preparado para enviar notificaciones automáticas por correo el
 *   **¿Cómo funciona?**
     1.  **Registro de Correo:** Asegúrate de que cada alumno tenga el `correo_tutor` registrado en su perfil.
     2.  **Envío Automático:** Cuando se registra una **entrada** o **salida** desde la aplicación web (por ejemplo, un registro manual), el sistema envía automáticamente un correo al tutor.
-    3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend en el entorno del servidor.
+    3.  **Configuración del Servicio de Envío:** El sistema utiliza **Resend** para el envío. Para que funcione, debes configurar tu clave de API de Resend como una variable de entorno en tu servidor.
     4.  **Automatización Completa (Opcional):** Para que los registros del lector de huellas también envíen correos, el paso final es implementar una **Cloud Function** en Firebase que se active cada vez que se cree un nuevo documento en la colección `asistencias` y ejecute la lógica de envío de correo.
 
     
