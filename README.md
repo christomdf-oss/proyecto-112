@@ -1,3 +1,5 @@
+#Zenkay: Sistema de Gestión de Asistencia e Identificación Biométrica
+
 Zenkay es una solución tecnológica integral diseñada para automatizar el control de asistencia en entornos educativos. El sistema integra hardware biométrico de alta precisión con una plataforma web centralizada para gestionar el registro de alumnos, el monitoreo en tiempo real y la generación de reportes académicos.
 
 Arquitectura del Sistema
