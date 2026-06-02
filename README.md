@@ -1,69 +1,69 @@
-#Zenkay: Sistema de Gestión de Asistencia e Identificación Biométrica
+ZENKAY: SISTEMA DE GESTIÓN DE ASISTENCIA E IDENTIFICACIÓN BIOMÉTRICA
 
-Zenkay es una solución tecnológica integral diseñada para automatizar el control de asistencia en entornos educativos. El sistema integra hardware biométrico de alta precisión con una plataforma web centralizada para gestionar el registro de alumnos, el monitoreo en tiempo real y la generación de reportes académicos.
+Zenkay es una solución tecnológica diseñada para la automatización del control de asistencia escolar, integrando hardware biométrico de alta precisión con una plataforma web para la gestión de alumnos, monitoreo en tiempo real y generación de reportes.
 
-Arquitectura del Sistema
-El sistema opera mediante una arquitectura híbrida que garantiza la sincronización constante entre el hardware de captura y la base de datos en la nube.
+ARQUITECTURA DEL SISTEMA
+El sistema opera bajo una arquitectura híbrida que garantiza la sincronización constante entre el hardware local y la base de datos en la nube.
 
-1. Módulo Web (Dashboard Administrativo)
-Desarrollado con Next.js 14+ y TypeScript, permite a los docentes y directivos:
+1. MÓDULO WEB (DASHBOARD ADMINISTRATIVO)
+Desarrollado con Next.js 14+ y TypeScript, incluye las siguientes funcionalidades:
 
-Gestión de Alumnos: CRUD completo para el registro y actualización de datos estudiantiles.
+GESTIÓN DE ALUMNOS: Implementación de un CRUD completo para el registro y actualización de datos estudiantiles.
 
-Control de Asistencia: Visualización en tiempo real de registros, gestión de faltas y justificaciones.
+CONTROL DE ASISTENCIA: Visualización en tiempo real de registros, gestión de faltas y justificaciones.
 
-Reportes: Generación de estadísticas de asistencia mediante componentes interactivos.
+REPORTES: Generación de estadísticas de asistencia a través de componentes interactivos.
 
-Seguridad: Autenticación robusta y control de acceso mediante reglas de Firestore.
+SEGURIDAD: Autenticación de usuarios y control de acceso basado en reglas de Firestore.
 
-2. Módulo de Hardware (Captura Biométrica)
-El núcleo de la identificación está basado en el Sensor Biométrico ZFM-20/ZFM-60 (o compatible con protocolo serial):
+2. MÓDULO DE HARDWARE (CAPTURA BIOMÉTRICA)
+Basado en el sensor biométrico ZFM-20/ZFM-60 (Protocolo Serial):
 
-hardware_manager.py: Script en Python que gestiona la comunicación serial entre el sensor y el sistema.
+hardware_manager.py: Script en Python encargado de gestionar la comunicación serial y la sincronización con Firebase.
 
-enroll_gui.py: Interfaz local diseñada para el alta rápida de huellas dactilares, permitiendo registrar usuarios sin necesidad de acceso a la web.
+enroll_gui.py: Interfaz local de consola para el registro de huellas dactilares.
 
-test_sensor.py: Herramienta de diagnóstico para la detección y validación de la conexión USB/Serial.
+test_sensor.py: Herramienta de diagnóstico para la validación de la conexión física del hardware.
 
-Guía de Instalación y Requisitos
-Requisitos de Hardware y Software
-Sensor: Sensor de huella dactilar compatible con protocolo serial (ej. ZFM series).
+GUÍA DE INSTALACIÓN Y REQUISITOS
+REQUISITOS DE HARDWARE Y SOFTWARE
+SENSOR: ZFM-20/ZFM-60 Series.
 
-Entorno: Python 3.10+ y Node.js 18+.
+ENTORNO: Python 3.10+ y Node.js 18+.
 
-Base de Datos: Proyecto en Firebase (Firestore + Authentication).
+BASE DE DATOS: Firebase (Firestore + Authentication).
 
-Pasos para el Despliegue
-Clonar el repositorio:
+PASOS PARA EL DESPLIEGUE
+CLONAR EL REPOSITORIO:
 
 Bash
 git clone https://github.com/christomdf-oss/proyecto-112.git
 cd proyecto-112/user/studio
-Configuración del Web App:
+CONFIGURACIÓN DEL WEB APP:
 
 Bash
 npm install
 # Configurar variables en .env.local
 npm run dev
-Configuración de Hardware:
+CONFIGURACIÓN DE HARDWARE:
 
 Bash
 python -m venv venv
 source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install pyserial firebase-admin
-Credenciales:
-Colocar el archivo serviceAccountKey.json (obtenido de la consola de Firebase) dentro de la carpeta /docs.
+ACREDITACIÓN:
+Colocar el archivo serviceAccountKey.json (proporcionado por Firebase) dentro de la carpeta /docs.
 
-Tecnologías Principales
-Frontend: Next.js, React, Tailwind CSS, Shadcn/UI.
+TECNOLOGÍAS PRINCIPALES
+FRONTEND: Next.js, React, Tailwind CSS, Shadcn/UI.
 
-Backend: Firebase Admin SDK, Firestore.
+BACKEND: Firebase Admin SDK, Firestore.
 
-Hardware: PySerial para comunicación con sensores biométricos.
+HARDWARE: PySerial (Python).
 
-Análisis: Genkit (Framework de IA para optimización de datos).
+INTELIGENCIA: Genkit.
 
-Consideraciones de Seguridad
-Credenciales: El archivo serviceAccountKey.json está excluido del control de versiones (.gitignore) para prevenir accesos no autorizados.
+CONSIDERACIONES DE SEGURIDAD
+CREDENCIALES: El archivo serviceAccountKey.json está excluido del control de versiones (vía .gitignore) para prevenir la exposición de llaves de acceso.
 
-Privacidad: La base de datos está protegida con reglas de Firestore que validan las peticiones en el servidor.
+PRIVACIDAD: La base de datos está protegida mediante reglas de seguridad de Firestore que validan las peticiones en el servidor.
