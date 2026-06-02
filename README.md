@@ -1,97 +1,56 @@
-Aquí tienes el texto completo del `README.md` diseñado para maximizar el impacto visual en GitHub, aplicando negritas y mayúsculas en todas las secciones clave para asegurar que los títulos y puntos importantes resalten inmediatamente.
+ZENKAY: SISTEMA DE GESTIÓN DE ASISTENCIA E IDENTIFICACIÓN BIOMÉTRICA
+Zenkay es una solución tecnológica diseñada para la automatización del control de asistencia escolar, integrando hardware biométrico de alta precisión con una plataforma web para la gestión de alumnos, monitoreo en tiempo real y generación de reportes.
 
----
+1. ARQUITECTURA DEL SISTEMA
+El sistema opera bajo una arquitectura híbrida que garantiza la sincronización constante entre el hardware local y la base de datos en la nube.
 
-# ZENKAY: SISTEMA DE GESTIÓN DE ASISTENCIA E IDENTIFICACIÓN BIOMÉTRICA
+A. MÓDULO WEB (DASHBOARD ADMINISTRATIVO)
+Desarrollado con Next.js 14+ y TypeScript, incluye las siguientes funcionalidades:
 
-**ZENKAY** ES UNA SOLUCIÓN TECNOLÓGICA DISEÑADA PARA LA AUTOMATIZACIÓN DEL CONTROL DE ASISTENCIA ESCOLAR, INTEGRANDO HARDWARE BIOMÉTRICO DE ALTA PRECISIÓN CON UNA PLATAFORMA WEB PARA LA GESTIÓN DE ALUMNOS, MONITOREO EN TIEMPO REAL Y GENERACIÓN DE REPORTES.
+Gestión de alumnos: implementación de un CRUD completo para el registro y actualización de datos estudiantiles.
 
----
+Control de asistencia: visualización en tiempo real de registros, gestión de faltas y justificaciones.
 
-## 1. ARQUITECTURA DEL SISTEMA
+Reportes: generación de estadísticas de asistencia a través de componentes interactivos.
 
-EL SISTEMA OPERA BAJO UNA ARQUITECTURA HÍBRIDA QUE GARANTIZA LA SINCRONIZACIÓN CONSTANTE ENTRE EL HARDWARE LOCAL Y LA BASE DE DATOS EN LA NUBE.
+Seguridad: autenticación de usuarios y control de acceso basado en reglas de Firestore.
 
-### A. MÓDULO WEB (DASHBOARD ADMINISTRATIVO)
+B. MÓDULO DE HARDWARE (CAPTURA BIOMÉTRICA)
+Basado en el sensor biométrico ZFM-20/ZFM-60 (protocolo serial):
 
-DESARROLLADO CON **NEXT.JS 14+** Y **TYPESCRIPT**, INCLUYE LAS SIGUIENTES FUNCIONALIDADES:
+hardware_manager.py: script en Python encargado de gestionar la comunicación serial y la sincronización con Firebase.
 
-* **GESTIÓN DE ALUMNOS:** IMPLEMENTACIÓN DE UN CRUD COMPLETO PARA EL REGISTRO Y ACTUALIZACIÓN DE DATOS ESTUDIANTILES.
-* **CONTROL DE ASISTENCIA:** VISUALIZACIÓN EN TIEMPO REAL DE REGISTROS, GESTIÓN DE FALTAS Y JUSTIFICACIONES.
-* **REPORTES:** GENERACIÓN DE ESTADÍSTICAS DE ASISTENCIA A TRAVÉS DE COMPONENTES INTERACTIVOS.
-* **SEGURIDAD:** AUTENTICACIÓN DE USUARIOS Y CONTROL DE ACCESO BASADO EN REGLAS DE FIRESTORE.
+enroll_gui.py: interfaz local de consola para el registro de huellas dactilares.
 
-### B. MÓDULO DE HARDWARE (CAPTURA BIOMÉTRICA)
+test_sensor.py: herramienta de diagnóstico para la validación de la conexión física del hardware.
 
-BASADO EN EL SENSOR BIOMÉTRICO **ZFM-20/ZFM-60 (PROTOCOLO SERIAL)**:
+2. GUÍA DE INSTALACIÓN Y REQUISITOS
+REQUISITOS DE HARDWARE Y SOFTWARE
+Sensor: ZFM-20/ZFM-60 series.
 
-* **HARDWARE_MANAGER.PY:** SCRIPT EN PYTHON ENCARGADO DE GESTIONAR LA COMUNICACIÓN SERIAL Y LA SINCRONIZACIÓN CON FIREBASE.
-* **ENROLL_GUI.PY:** INTERFAZ LOCAL DE CONSOLA PARA EL REGISTRO DE HUELLAS DACTILARES.
-* **TEST_SENSOR.PY:** HERRAMIENTA DE DIAGNÓSTICO PARA LA VALIDACIÓN DE LA CONEXIÓN FÍSICA DEL HARDWARE.
+Entorno: Python 3.10+ y Node.js 18+.
 
----
+Base de datos: Firebase (Firestore + Authentication).
 
-## 2. GUÍA DE INSTALACIÓN Y REQUISITOS
+PASOS PARA EL DESPLIEGUE
+CLONAR EL REPOSITORIO: git clone https://github.com/christomdf-oss/proyecto-112.git cd proyecto-112/user/studio
 
-### REQUISITOS DE HARDWARE Y SOFTWARE
+CONFIGURACIÓN DEL WEB APP: npm install (y configurar variables en .env.local) npm run dev
 
-* **SENSOR:** ZFM-20/ZFM-60 SERIES.
-* **ENTORNO:** PYTHON 3.10+ Y NODE.JS 18+.
-* **BASE DE DATOS:** FIREBASE (FIRESTORE + AUTHENTICATION).
+CONFIGURACIÓN DE HARDWARE: python -m venv venv, source venv/bin/activate, pip install pyserial firebase-admin
 
-### PASOS PARA EL DESPLIEGUE
+Acreditación: colocar el archivo serviceAccountKey.json (proporcionado por Firebase) dentro de la carpeta /docs.
 
-1. **CLONAR EL REPOSITORIO:**
-```BASH
-GIT CLONE HTTPS://GITHUB.COM/CHRISTOMDF-OSS/PROYECTO-112.GIT
-CD PROYECTO-112/USER/STUDIO
+3. TECNOLOGÍAS PRINCIPALES
+Frontend: Next.js, React, Tailwind CSS, Shadcn/UI.
 
-```
+Backend: Firebase Admin SDK, Firestore.
 
+Hardware: PySerial (Python).
 
+Inteligencia: Genkit.
 
-```
+4. CONSIDERACIONES DE SEGURIDAD
+Credenciales: el archivo serviceAccountKey.json está excluido del control de versiones (vía .gitignore) para prevenir la exposición de llaves de acceso.
 
-2. **CONFIGURACIÓN DEL WEB APP:**
-   ```BASH
-   NPM INSTALL
-   # CONFIGURAR VARIABLES EN .ENV.LOCAL
-   NPM RUN DEV
-
-```
-
-3. **CONFIGURACIÓN DE HARDWARE:**
-```BASH
-PYTHON -M VENV VENV
-SOURCE VENV/BIN/ACTIVATE  # EN WINDOWS: VENV\SCRIPTS\ACTIVATE
-PIP INSTALL PYSERIAL FIREBASE-ADMIN
-
-```
-
-
-
-```
-
-4. **ACREDITACIÓN:**
-   COLOCAR EL ARCHIVO **SERVICEACCOUNTKEY.JSON** (PROPORCIONADO POR FIREBASE) DENTRO DE LA CARPETA `/DOCS`.
-
----
-
-## 3. TECNOLOGÍAS PRINCIPALES
-
-* **FRONTEND:** NEXT.JS, REACT, TAILWIND CSS, SHADCN/UI.
-* **BACKEND:** FIREBASE ADMIN SDK, FIRESTORE.
-* **HARDWARE:** PYSERIAL (PYTHON).
-* **INTELIGENCIA:** GENKIT.
-
----
-
-## 4. CONSIDERACIONES DE SEGURIDAD
-
-* **CREDENCIALES:** EL ARCHIVO **SERVICEACCOUNTKEY.JSON** ESTÁ EXCLUIDO DEL CONTROL DE VERSIONES (VÍA .GITIGNORE) PARA PREVENIR LA EXPOSICIÓN DE LLAVES DE ACCESO.
-* **PRIVACIDAD:** LA BASE DE DATOS ESTÁ PROTEGIDA MEDIANTE REGLAS DE SEGURIDAD DE FIRESTORE QUE VALIDAN LAS PETICIONES EN EL SERVIDOR.
-
-***
-repositorio. ¿Deseas hacer algún otro ajuste antes de subirlo definitivamente?
-
-```
+Privacidad: la base de datos está protegida mediante reglas de seguridad de Firestore que validan las peticiones en el servidor.
