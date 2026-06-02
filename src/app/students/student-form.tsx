@@ -45,8 +45,8 @@ interface StudentFormProps {
   onSubmit: (data: StudentFormValues) => void;
   onClose: () => void;
   comunidades: string[];
-  onAddComunidad: (comunidad: string) => boolean;
-  onRemoveComunidad: (comunidad: string) => void;
+  onAddComunidad: (comunidad: string) => Promise<boolean> | boolean;
+  onRemoveComunidad: (comunidad: string) => Promise<void> | void;
   initialData?: StudentFormValues | null;
 }
 
@@ -73,12 +73,17 @@ export function StudentForm({ onSubmit, onClose, comunidades, onAddComunidad, on
   const [isManaging, setIsManaging] = React.useState(false);
   const isEditing = !!initialData;
 
-  const handleAddNewComunidad = () => {
-    if (newComunidad.trim()) {
-      const success = onAddComunidad(newComunidad.trim());
+  const handleAddNewComunidad = async () => {
+    if (!newComunidad.trim()) return;
+
+    try {
+      const success = await onAddComunidad(newComunidad.trim());
       if (success) {
         setNewComunidad('');
       }
+    } catch (e) {
+      // Silenciar errores aquí; `onAddComunidad` ya muestra toasts en la página padre
+      console.error('Error en handleAddNewComunidad:', e);
     }
   };
 

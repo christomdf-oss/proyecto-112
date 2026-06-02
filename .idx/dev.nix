@@ -7,6 +7,8 @@
   packages = [
     pkgs.nodejs_20
     pkgs.zulu
+    pkgs.python311
+    pkgs.python311Packages.tkinter
   ];
   # Sets environment variables in the workspace
   env = {};

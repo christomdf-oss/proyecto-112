@@ -27,11 +27,11 @@ import type { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { EnrollFingerprintDialog } from './enroll-fingerprint-dialog';
 import { useFirestore } from '@/firebase';
-import { doc, setDoc, deleteDoc, getDocs, collection } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, getDocs, collection, addDoc, onSnapshot } from 'firebase/firestore';
 
 type StudentFormValues = Parameters<typeof StudentForm>[0]['onSubmit'] extends (data: infer T) => void ? T : never;
 
-const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL', 'PITAL', 'EL CARMEN'];
+const initialComunidades = ['CHICBUL', 'PLAN DE AYALA', 'JOBAL', 'CHECKOBUL',];
 
 export default function StudentsPage() {
   const firestore = useFirestore();
@@ -66,6 +66,32 @@ export default function StudentsPage() {
   React.useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+
+  React.useEffect(() => {
+    if (!firestore) return;
+
+    const communitiesCol = collection(firestore, 'communities');
+    const unsubscribe = onSnapshot(
+      communitiesCol,
+      (snapshot) => {
+        try {
+          const list = snapshot.docs
+            .map((d) => (d.data() as any)?.name)
+            .filter(Boolean)
+            .map((n) => String(n).toUpperCase());
+          setComunidades(Array.from(new Set(list)).sort());
+        } catch (e: any) {
+          console.error('Error al procesar comunidades:', e);
+        }
+      },
+      (err) => {
+        console.error('Error al suscribirse a comunidades:', err);
+        toast({ variant: 'destructive', title: 'Error', description: 'No se pudieron cargar las comunidades.' });
+      }
+    );
+
+    return () => unsubscribe();
+  }, [firestore, toast]);
 
 
   const closeForm = () => {
@@ -149,33 +175,54 @@ export default function StudentsPage() {
     }
   };
   
-  const handleAddComunidad = (newComunidad: string) => {
+  const handleAddComunidad = async (newComunidad: string) => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No hay conexión a Firestore.' });
+      return false;
+    }
+
     const upperCaseComunidad = newComunidad.toUpperCase();
-    if (upperCaseComunidad && !comunidades.includes(upperCaseComunidad)) {
-      setComunidades(prev => [...prev, upperCaseComunidad].sort());
-      toast({
-        title: "Comunidad Agregada",
-        description: `${upperCaseComunidad} ha sido agregada a la lista.`,
-      });
-      return true;
-    }
+    if (!upperCaseComunidad) return false;
     if (comunidades.includes(upperCaseComunidad)) {
-        toast({
-            variant: "destructive",
-            title: "Comunidad ya existe",
-            description: `${upperCaseComunidad} ya está en la lista.`,
-        });
+      toast({ variant: 'destructive', title: 'Comunidad ya existe', description: `${upperCaseComunidad} ya está en la lista.` });
+      return false;
     }
-    return false;
+
+    try {
+      await addDoc(collection(firestore, 'communities'), { name: upperCaseComunidad });
+      toast({ title: 'Comunidad Agregada', description: `${upperCaseComunidad} ha sido agregada a la lista.` });
+      return true;
+    } catch (e: any) {
+      console.error('Error al agregar comunidad:', e);
+      toast({ variant: 'destructive', title: 'Error al guardar', description: e.message });
+      return false;
+    }
   };
 
-  const handleRemoveComunidad = (comunidadToRemove: string) => {
-    setComunidades(prev => prev.filter(c => c !== comunidadToRemove));
-    toast({
-        variant: "destructive",
-        title: "Comunidad Eliminada",
-        description: `${comunidadToRemove} ha sido eliminada de la lista.`,
-    });
+  const handleRemoveComunidad = async (comunidadToRemove: string) => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No hay conexión a Firestore.' });
+      return;
+    }
+
+    try {
+      const snapshot = await getDocs(collection(firestore, 'communities'));
+      const matches = snapshot.docs.filter((d) => {
+        const name = (d.data() as any)?.name;
+        return String(name || '').toUpperCase() === comunidadToRemove.toUpperCase();
+      });
+
+      if (matches.length === 0) {
+        toast({ variant: 'destructive', title: 'No encontrado', description: `${comunidadToRemove} no se encontró en la lista.` });
+        return;
+      }
+
+      await Promise.all(matches.map((d) => deleteDoc(doc(firestore, 'communities', d.id))));
+      toast({ variant: 'destructive', title: 'Comunidad Eliminada', description: `${comunidadToRemove} ha sido eliminada de la lista.` });
+    } catch (e: any) {
+      console.error('Error al eliminar comunidad:', e);
+      toast({ variant: 'destructive', title: 'Error al eliminar', description: e.message });
+    }
   };
   
   const handleOpenEnrollDialog = (student: Student) => {

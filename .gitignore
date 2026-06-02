@@ -43,3 +43,9 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+# Python environment
+env/
+docs/venv/
+
+# Secretos de Firebase
+docs/serviceAccountKey.json

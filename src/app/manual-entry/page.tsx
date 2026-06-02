@@ -55,6 +55,7 @@ export default function ManualEntryPage() {
 
   const [filters, setFilters] = React.useState({ name: '', matricula: '' });
   const [searchResults, setSearchResults] = React.useState<Student[]>([]);
+  const [showAllStudents, setShowAllStudents] = React.useState(false);
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
   const [searchPerformed, setSearchPerformed] = React.useState(false);
   const [recordToDelete, setRecordToDelete] = React.useState<Attendance | null>(null);
@@ -120,6 +121,7 @@ export default function ManualEntryPage() {
 
   const handleSearch = () => {
     setSelectedStudent(null);
+    setShowAllStudents(false);
     if (!filters.matricula && !filters.name) {
         setSearchResults([]);
         setSearchPerformed(false);
@@ -141,6 +143,7 @@ export default function ManualEntryPage() {
   const handleClearSearch = () => {
     setSearchResults([]);
     setSearchPerformed(false);
+    setShowAllStudents(false);
     setFilters({ name: '', matricula: '' });
   }
 
@@ -242,7 +245,10 @@ export default function ManualEntryPage() {
        <Card className="mb-6">
         <CardHeader>
             <CardTitle>Búsqueda Específica de Alumno</CardTitle>
-            <CardDescription>Usa esta sección si necesitas añadir un registro para un alumno que no está en la lista de ausentes (ej. una salida manual o un permiso).</CardDescription>
+            <CardDescription>
+              Usa esta sección si necesitas añadir un registro para un alumno que no está en la lista de ausentes (ej. una salida manual o un permiso).
+              Si el alumno ya tiene entrada registrada hoy, búscalo por nombre o matrícula y luego elige salida o permiso.
+            </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
@@ -259,21 +265,29 @@ export default function ManualEntryPage() {
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <Button onClick={handleSearch} className="w-full sm:w-auto" disabled={loading}>
                 <Search className="mr-2 h-4 w-4" />
                 {loading ? 'Cargando...' : 'Buscar'}
             </Button>
-            {(searchPerformed || filters.name || filters.matricula) && <Button onClick={handleClearSearch} variant="outline">Limpiar</Button>}
+            <div className="flex gap-2 w-full sm:w-auto">
+              {(searchPerformed || filters.name || filters.matricula) && <Button onClick={handleClearSearch} variant="outline" className="w-full sm:w-auto">Limpiar</Button>}
+              <Button onClick={() => { setShowAllStudents(true); setSearchPerformed(false); setSelectedStudent(null); }} variant="secondary" className="w-full sm:w-auto">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Mostrar todos los alumnos
+              </Button>
+            </div>
           </div>
 
-          {searchPerformed && (
+          {(searchPerformed || showAllStudents) && (
              <div className="mt-6">
-                {searchResults.length > 0 ? (
+                {((showAllStudents ? allStudents : searchResults)?.length ?? 0) > 0 ? (
                     <div className="space-y-2">
-                        <h3 className="text-base font-semibold">Resultados de Búsqueda ({searchResults.length})</h3>
+                        <h3 className="text-base font-semibold">
+                          {showAllStudents ? 'Todos los alumnos' : `Resultados de Búsqueda (${searchResults.length})`}
+                        </h3>
                         <div className="rounded-md border max-h-[40vh] overflow-y-auto">
-                            {searchResults.map((student) => (
+                            {(showAllStudents ? allStudents : searchResults).map((student) => (
                               <div
                                 key={student.matricula}
                                 className="flex items-center justify-between p-3 border-b last:border-b-0"

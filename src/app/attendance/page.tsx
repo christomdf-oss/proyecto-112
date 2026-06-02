@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Student, Attendance, ProcessedAttendance } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Download, RefreshCw } from 'lucide-react';
+import { io } from 'socket.io-client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,23 @@ import { useFirestore } from '@/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import type * as XLSX from 'xlsx';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const DEFAULT_KIOSK_API_BASE = 'http://127.0.0.1:5000';
+
+function getKioskApiBase() {
+  const envUrl = process.env.NEXT_PUBLIC_KIOSK_URL?.trim();
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '');
+  }
+
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol || 'http:';
+    const hostname = window.location.hostname || '127.0.0.1';
+    return `${protocol}//${hostname}:5000`;
+  }
+
+  return DEFAULT_KIOSK_API_BASE;
+}
 
 export default function AttendancePage() {
   const firestore = useFirestore();
@@ -77,10 +95,218 @@ export default function AttendancePage() {
     }
   }, [firestore, toast]);
 
+  const [attendanceMode, setAttendanceMode] = React.useState<'entrada' | 'salida' | null>(null);
+  const [attendanceActive, setAttendanceActive] = React.useState(false);
+  const [attendanceLoading, setAttendanceLoading] = React.useState(false);
+  const [activityLog, setActivityLog] = React.useState<string[]>([]);
+  const [socketConnected, setSocketConnected] = React.useState(false);
+
+  const pushActivityLog = React.useCallback((message: string) => {
+    setActivityLog((current) => [message, ...current].slice(0, 10));
+  }, []);
+
+  const callKioskApi = React.useCallback(async (path: string, options?: RequestInit) => {
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const apiBase = getKioskApiBase();
+    const url = `${apiBase}${normalizedPath}`;
+
+    try {
+      const response = await fetch(url, {
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const text = await response.text();
+      const data = text && contentType.includes('application/json') ? JSON.parse(text) : null;
+
+      if (!response.ok) {
+        console.error('Kiosk API returned error:', response.status, data);
+        toast({
+          variant: 'destructive',
+          title: 'Error de servidor biométrico',
+          description: data?.error || `HTTP ${response.status}`,
+        });
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error calling kiosk API:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error de conexión',
+        description: `Fallo al conectar con ${url}. Revisa que el servidor biométrico esté activo.`,
+      });
+      return null;
+    }
+  }, [toast]);
+
+  React.useEffect(() => {
+    const socket = io(getKioskApiBase(), {
+      path: '/socket.io',
+      transports: ['websocket'],
+    });
+
+    socket.on('connect', () => {
+      setSocketConnected(true);
+      pushActivityLog('Conectado al servidor de asistencia biométrica.');
+    });
+
+    socket.on('disconnect', () => {
+      setSocketConnected(false);
+      pushActivityLog('Desconectado del servidor biométrico.');
+    });
+
+    socket.on('attendance_marked', (payload: any) => {
+      const message = `Asistencia registrada: ${payload.studentName} (${payload.action})`;
+      pushActivityLog(message);
+      toast({
+        title: 'Asistencia registrada',
+        description: message,
+      });
+      fetchData();
+    });
+
+    socket.on('attendance_error', (payload: any) => {
+      const message = payload?.error || 'Error desconocido en el servidor biométrico.';
+      pushActivityLog(`Error: ${message}`);
+      toast({
+        variant: 'destructive',
+        title: 'Error de asistencia',
+        description: message,
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [fetchData, pushActivityLog, toast]);
+
+  const refreshAttendanceStatus = React.useCallback(async () => {
+    const status = await callKioskApi('/api/attendance-status');
+    if (status?.success) {
+      setAttendanceActive(status.attendance_mode ?? false);
+      setAttendanceMode(status.attendance_type ?? null);
+    }
+  }, [callKioskApi]);
+
   React.useEffect(() => {
     setSelectedDate(new Date());
     fetchData();
-  }, [fetchData]);
+    refreshAttendanceStatus();
+  }, [fetchData, refreshAttendanceStatus]);
+
+  const startAttendance = React.useCallback(async (mode: 'entrada' | 'salida') => {
+    setAttendanceLoading(true);
+    const result = await callKioskApi('/api/start-attendance', {
+      method: 'POST',
+      body: JSON.stringify({ type: mode }),
+    });
+
+    if (result?.success) {
+      setAttendanceActive(true);
+      setAttendanceMode(mode);
+      pushActivityLog(`Modo de asistencia iniciado: ${mode}`);
+      toast({
+        title: 'Modo iniciado',
+        description: `El sistema está listo para ${mode === 'entrada' ? 'entradas' : 'salidas'}.`,
+      });
+    }
+
+    setAttendanceLoading(false);
+  }, [callKioskApi, pushActivityLog, toast]);
+
+  const stopAttendance = React.useCallback(async () => {
+    setAttendanceLoading(true);
+    const result = await callKioskApi('/api/stop-attendance', {
+      method: 'POST',
+    });
+
+    if (result?.success) {
+      setAttendanceActive(false);
+      setAttendanceMode(null);
+      pushActivityLog('Sistema de asistencia detenido.');
+      toast({
+        title: 'Sistema detenido',
+        description: 'La escucha biométrica se ha detenido.',
+      });
+    }
+
+    setAttendanceLoading(false);
+  }, [callKioskApi, pushActivityLog, toast]);
+
+  const modeLabel = attendanceActive
+    ? attendanceMode === 'entrada'
+      ? 'Entradas activas'
+      : 'Salidas activas'
+    : 'Sistema inactivo';
+
+  const modeStatus = attendanceActive
+    ? attendanceMode === 'entrada'
+      ? 'Modo Entradas'
+      : 'Modo Salidas'
+    : 'Detenido';
+
+  const statusBadge = socketConnected ? 'Conectado' : 'Desconectado';
+
+  const startAttendanceButton = (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        variant="outline"
+        onClick={() => startAttendance('entrada')}
+        disabled={attendanceLoading || attendanceActive}
+      >
+        Iniciar Entradas
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => startAttendance('salida')}
+        disabled={attendanceLoading || attendanceActive}
+      >
+        Iniciar Salidas
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={stopAttendance}
+        disabled={attendanceLoading || !attendanceActive}
+      >
+        Detener Sistema
+      </Button>
+    </div>
+  );
+
+  const statusCard = (
+    <Card className="mb-4 p-4">
+      <div className="mb-2 text-sm text-slate-500">Estado del servidor biométrico</div>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+          {statusBadge}
+        </div>
+        <div className="rounded-md border border-slate-200 px-3 py-2 text-sm">
+          {modeStatus}
+        </div>
+      </div>
+    </Card>
+  );
+
+  const activityLogPanel = (
+    <Card className="mb-4 p-4">
+      <div className="mb-2 text-sm text-slate-500">Actividad en tiempo real</div>
+      <div className="space-y-2 text-sm">
+        {activityLog.length === 0 ? (
+          <div className="text-slate-600">No se han recibido eventos todavía.</div>
+        ) : (
+          activityLog.map((item, index) => (
+            <div key={`${item}-${index}`} className="rounded-md bg-slate-50 px-3 py-2">
+              {item}
+            </div>
+          ))
+        )}
+      </div>
+    </Card>
+  );
 
   const processedAttendance = React.useMemo(() => {
     if (!attendanceData || !allStudents || !selectedDate) return [];
@@ -475,8 +701,8 @@ export default function AttendancePage() {
     return (
       <div className="container mx-auto py-2">
         <PageHeader
-          title="Historial de Asistencia"
-          description="Selecciona una fecha para revisar los registros del día."
+          title="Control de Asistencia Biométrica"
+          description="Visualiza historial y gestiona el modo de asistencia en tiempo real."
         >
           <div className="flex items-center gap-2">
             <Skeleton className="h-10 w-32" />
@@ -540,7 +766,7 @@ export default function AttendancePage() {
   return (
     <div className="container mx-auto py-2">
       <PageHeader
-        title="Historial de Asistencia"
+        title="Control de Asistencia Biométrica"
         description="Selecciona una fecha para revisar los registros del día."
       >
         <div className="flex items-center gap-2">
@@ -569,6 +795,19 @@ export default function AttendancePage() {
           </DropdownMenu>
         </div>
       </PageHeader>
+      <div className="grid gap-4 mb-4">
+        {statusCard}
+        <Card className="p-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <div className="text-sm text-slate-500">Modo de captura</div>
+              <div className="text-lg font-semibold">{modeLabel}</div>
+            </div>
+            <div className="flex flex-wrap gap-2">{startAttendanceButton}</div>
+          </div>
+        </Card>
+        {activityLogPanel}
+      </div>
       <Card>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
           <div className="md:col-span-1 md:border-r">
